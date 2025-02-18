@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Conversation;
+use App\Models\Friends;
 use App\Models\Group;
 use App\Models\GroupUsers;
 use App\Models\Message;
@@ -27,6 +28,20 @@ class DatabaseSeeder extends Seeder
             "password" => Hash::make("password"),
         ]);
 
+
+        $user_ids = User::all()->pluck('id')->toArray();
+
+        foreach ($user_ids as $id) {
+            for ($i = 1; $i < 12; $i++) {
+                if ($id !== $i) {
+                    Friends::factory()->create([
+                        "user_id" => $id,
+                        "friend_id" => $i,
+                        'status' => 'accept'
+                    ]);
+                }
+            }
+        }
 
 
         $con = 1;
