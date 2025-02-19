@@ -31,6 +31,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(), // Sets the current time for email verification
             'password' => static::$password ??= Hash::make('password'), // Uses a default password (hashed) or a pre-existing static password
             'remember_token' => Str::random(10), // Generates a random string for the remember token
+            'active' => now(),
         ];
     }
 

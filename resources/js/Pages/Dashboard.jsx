@@ -2,7 +2,10 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import ChatLayout from "@/Layouts/ChatLayout";
 import { Head } from "@inertiajs/react";
 
-function Dashboard() {
+function Dashboard({ selected_conversation, messages }) {
+    console.log("messages", messages);
+    console.log("selected_conversation", selected_conversation);
+
     return (
         <div>
             <Head title="Dashboard" />

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->timestamps();
             $table->string('name')->nullable();
             $table->longText('description')->nullable();
+            $table->string('avatar')->nullable();
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
         });
         Schema::create('group_users', function (Blueprint $table) {
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
+            $table->string('status')->nullable();
         });
     }
 

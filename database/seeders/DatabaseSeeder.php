@@ -29,21 +29,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
 
-        $user_ids = User::all()->pluck('id')->toArray();
-
-        foreach ($user_ids as $id) {
-            for ($i = 1; $i < 12; $i++) {
-                if ($id !== $i) {
-                    Friends::factory()->create([
-                        "user_id" => $id,
-                        "friend_id" => $i,
-                        'status' => 'accept'
-                    ]);
-                }
-            }
-        }
-
-
         $con = 1;
         for ($i = 1; $i < 6; $i++) {
             for ($j = 6; $j < 12; $j++) {
@@ -52,6 +37,7 @@ class DatabaseSeeder extends Seeder
                     'id' => $con,
                     'user_id1' => $i,
                     'user_id2' => $j,
+                    "status" => "accept"
                 ]);
                 Message::factory(10)->create([
                     'sender_id' => $i,
@@ -76,12 +62,12 @@ class DatabaseSeeder extends Seeder
             ]);
 
             for ($j = 1; $j < 11; $j++) {
-                if ($j !== $i) {
-                    GroupUsers::factory()->create([
-                        'group_id' => $gro,
-                        'user_id' => $j,
-                    ]);
-                }
+                GroupUsers::factory()->create([
+                    'group_id' => $gro,
+                    'user_id' => $j,
+                    "status" => "accept"
+
+                ]);
             }
 
             Message::factory(10)->create([
@@ -94,7 +80,6 @@ class DatabaseSeeder extends Seeder
             Group::where('id', $gro)->update([
                 'last_message_id' => $gro * 10 + 300,
             ]);
-
 
             $gro++;
         }

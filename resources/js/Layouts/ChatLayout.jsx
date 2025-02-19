@@ -1,40 +1,62 @@
-import {
-    Combobox,
-    ComboboxInput,
-    ComboboxOption,
-    ComboboxOptions,
-} from "@headlessui/react";
-import { CheckIcon } from "@heroicons/react/20/solid";
+import ConversationItem from "@/Components/App/ConversationItem";
+import TextInput from "@/Components/TextInput";
+import { usePage } from "@inertiajs/react";
 import React, { useState } from "react";
 import { useEffect } from "react";
 
 const ChatLayout = ({ children }) => {
-    const [onlineUsers, setOnlineUsers] = useState([]);
-    const [selectedPerson, setSelectedPerson] = useState(onlineUsers[0]);
-    const [query, setQuery] = useState("");
+    const page = usePage();
+    const conversations = page.props.conversations;
+    const selectedConversation = null;
 
-    const filteredPeople =
-        query === ""
-            ? onlineUsers
-            : onlineUsers.filter((person) => {
-                  return person.name
-                      .toLowerCase()
-                      .includes(query.toLowerCase());
-              });
+    const [sortedConversations, setSortedConversations] = useState([]);
+    const [localConversations, setLocalConversations] = useState([]);
+    const [onlineUsers, setOnlineUsers] = useState([]);
+    const [activeTime, setActiveTime] = useState("");
+
+    const onSearch = (e) => {
+        const search = e.target.value.toLowerCase();
+        setLocalConversations(
+            conversations.filter((conversation) => {
+                return conversation.name.toLowerCase().includes(search);
+            })
+        );
+    };
+
+    const isUserOnline = (user_id) => onlineUsers[user_id];
+
+    useEffect(() => {
+        setLocalConversations(conversations);
+    }, [conversations]);
+
+    useEffect(() => {
+        setSortedConversations(localConversations.sort());
+    }, [localConversations]);
 
     useEffect(() => {
         Echo.join("online")
             .here((users) => {
-                setOnlineUsers(users);
-                // console.log(users);
+                const online_users = Object.fromEntries(
+                    users.map((user) => [user.id, user])
+                );
+                setOnlineUsers((pre) => {
+                    return { ...pre, ...online_users };
+                });
             })
             .joining((user) => {
-                setOnlineUsers((pre) => [...pre, user]);
+                setOnlineUsers((pre) => {
+                    const preOnlineUser = { ...pre };
+                    preOnlineUser[user.id] = user;
+                    return preOnlineUser;
+                });
             })
             .leaving((user) => {
                 setOnlineUsers((pre) => {
-                    return pre.filter((ur) => ur.id !== user.id);
+                    const preOnlineUser = { ...pre };
+                    delete preOnlineUser[user.id];
+                    return preOnlineUser;
                 });
+                setActiveTime(Date.now());
             })
             .error((err) => {
                 console.log(err);
@@ -46,45 +68,38 @@ const ChatLayout = ({ children }) => {
     }, []);
 
     return (
-        <>
-            <div className="flex flex-1 dark:text-gray-400 h-screen text-gray-800 overflow-hidden w-full">
-                <div className="flex">
-                    <div className="hidden md:block w-[18rem] p-4 dark:bg-inherit/10 border-r-2 border-slate-800 rounded-md">
-                        <Combobox
-                            value={selectedPerson}
-                            onChange={setSelectedPerson}
-                            onClose={() => setQuery("")}
-                        >
-                            <ComboboxInput
-                                aria-label="Assignee"
-                                displayValue={(person) => person?.name}
-                                onChange={(event) =>
-                                    setQuery(event.target.value)
-                                }
-                                placeholder="Search....."
-                                className={"w-full rounded-md bg-inherit"}
+        <div className="flex-1 w-full flex h-[calc(100vh-64.67px)]">
+            <div
+                className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
+                    selectedConversation ? "-ml-[100%] sm:ml-0" : ""
+                }`}
+            >
+                <div className="p-3">
+                    <TextInput
+                        onKeyUp={onSearch}
+                        placeholder="Filter users and groups"
+                        className="w-full"
+                    />
+                </div>
+                <div className="flex-1 shadow-md shadow-gray-600 overflow-auto">
+                    {sortedConversations &&
+                        sortedConversations.map((conversation) => (
+                            <ConversationItem
+                                key={`${
+                                    conversation.is_group ? "group_" : "user_"
+                                }${conversation.id}`}
+                                conversation={conversation}
+                                online={!!isUserOnline(conversation.id)}
+                                selectedConversation={selectedConversation}
+                                activeTime={activeTime}
                             />
-                            <ComboboxOptions
-                                anchor="bottom"
-                                className="border empty:invisible bg-inherit mt-1 rounded"
-                            >
-                                {filteredPeople.map((person) => (
-                                    <ComboboxOption
-                                        key={person.id}
-                                        value={person}
-                                        className="group flex w-64 gap-2 bg-inherit data-[focus]:bg-slate-700 px-2"
-                                    >
-                                        <CheckIcon className="size-4 mt-1 invisible text-inherit group-data-[selected]:visible" />
-                                        {person.name}
-                                    </ComboboxOption>
-                                ))}
-                            </ComboboxOptions>
-                        </Combobox>
-                    </div>
-                    <div className="flex-1">{children}</div>
+                        ))}
                 </div>
             </div>
-        </>
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {children}
+            </div>
+        </div>
     );
 };
 
