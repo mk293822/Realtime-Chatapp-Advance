@@ -25,6 +25,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
             $table->string('status')->nullable();
+            $table->timestamp("status_at")->nullable();
         });
     }
 

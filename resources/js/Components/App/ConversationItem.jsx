@@ -29,8 +29,6 @@ const ConversationItem = ({
         }
     }
 
-    // console.log(conversation);
-
     return (
         <Link
             href={

@@ -10,6 +10,8 @@ use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/last-active-time/{user}', [ProfileController::class, 'lastActiveTime'])->name('user.lastActiveTime');
+
 
     Route::get('/private/{conversation}', [MessageController::class, 'conversation'])->name('message.conversation');
     Route::get('/group/{group}', [MessageController::class, 'group'])->name('message.group');

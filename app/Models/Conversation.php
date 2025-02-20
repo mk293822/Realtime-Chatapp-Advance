@@ -2,13 +2,27 @@
 
 namespace App\Models;
 
+use App\Enums\FriendStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class Conversation extends Model
 {
     use HasFactory;
+
+    public static function boot()
+    {
+        parent::boot();
+
+
+        static::saving(function ($model) {
+            $now = $now = Carbon::now("UTC");
+            if ($model->isDirty('status')) {
+                $model->status_at = $now->format('Y-m-d H:i:s');
+            }
+        });
+    }
 
 
     public function user1()
@@ -29,11 +43,16 @@ class Conversation extends Model
         $users = User::getExceptUser($exceptUser);
         $groups = Group::getExceptUser($exceptUser);
 
-
-        return $users->map(function (User $user) {
+        $conversations = $users->map(function (User $user) {
             return $user->toConversationArray();
         })->concat($groups->map(function (Group $group) {
             return $group->toConversationArray();
         }));
+
+        $statuses = [FriendStatusEnum::Accept->value => 1, FriendStatusEnum::Block->value => 2];
+
+        return $conversations->sortBy(function ($con) use ($statuses) {
+            return $statuses[$con['status']] ?? 3;
+        });
     }
 }

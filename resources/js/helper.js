@@ -1,6 +1,6 @@
 export function formatActiveDate(date) {
-    const now = new Date(); // Current date and time
-    const inputDate = new Date(date); // Input date
+    const now = new Date();
+    const inputDate = new Date(date);
     const diffInMilliseconds = now - inputDate; // Difference in milliseconds
     const diffInSeconds = Math.floor(diffInMilliseconds / 1000); // Convert to seconds
 

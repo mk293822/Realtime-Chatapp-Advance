@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
+use Carbon\Carbon;
+use DateTime;
+use DateTimeZone;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +28,22 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function lastActiveTime($user_id, Request $request)
+    {
+        $user = User::find($user_id);
+
+        $now = Carbon::now("UTC");
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $user->update([
+            'active' => $now->format('Y-m-d H:i:s'),
+        ]);
+
+        return response()->json(['success' => "User {$user->name} is now offline at {$user->active}"]);
+    }
     /**
      * Update the user's profile information.
      */

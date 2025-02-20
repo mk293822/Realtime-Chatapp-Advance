@@ -5,10 +5,25 @@ namespace App\Models;
 use App\Enums\FriendStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class Group extends Model
 {
     use HasFactory;
+
+    public static function boot()
+    {
+        parent::boot();
+
+
+        static::saving(function ($model) {
+            $now = $now = Carbon::now("UTC");
+            if ($model->isDirty('status')) {
+                $model->status_at = $now->format('Y-m-d H:i:s');
+            }
+        });
+    }
+
 
     public function group_users()
     {
@@ -26,6 +41,10 @@ class Group extends Model
             ->join('group_users', 'group_users.group_id', '=', 'groups.id')
             ->leftJoin('messages', 'messages.id', '=', 'groups.last_message_id')
             ->where('group_users.user_id', $user->id)
+            ->where(function ($query) {
+                $query->where("group_users.status", "=", FriendStatusEnum::Accept->value)
+                    ->orWhere("group_users.status", "=", FriendStatusEnum::Block->value);
+            })
             ->orderBy('messages.created_at', 'desc')
             ->orderBy('groups.name');
 
@@ -45,12 +64,14 @@ class Group extends Model
                     "name" => $user->name,
                     "id" => $user->id,
                     "active" => $user->active,
-                    "avatar" => $user->avatar
+                    "avatar" => $user->avatar,
+                    "status" => $group_user->status,
+                    "status_at" => $group_user->status_at . " UTC",
                 ];
             }),
+            "status" => $this->status,
             'last_message' => $this->last_message,
             'last_message_date' => $this->last_message_date . " UTC",
-            "status" => $this->status,
             'is_conversation' => false,
             "is_group" => true,
         ];

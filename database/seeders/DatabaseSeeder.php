@@ -10,7 +10,6 @@ use App\Models\Message;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -28,7 +27,6 @@ class DatabaseSeeder extends Seeder
             "password" => Hash::make("password"),
         ]);
 
-
         $con = 1;
         for ($i = 1; $i < 6; $i++) {
             for ($j = 6; $j < 12; $j++) {
@@ -37,7 +35,8 @@ class DatabaseSeeder extends Seeder
                     'id' => $con,
                     'user_id1' => $i,
                     'user_id2' => $j,
-                    "status" => "accept"
+                    "status" => "accept",
+                    "status_at" => now()
                 ]);
                 Message::factory(10)->create([
                     'sender_id' => $i,
@@ -54,19 +53,20 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+
         $gro = 1;
-        for ($i = 1; $i < 11; $i++) {
+        for ($i = 1; $i < 12; $i++) {
             Group::factory()->create([
                 'id' => $gro,
                 'owner_id' => $i,
             ]);
 
-            for ($j = 1; $j < 11; $j++) {
+            for ($j = 1; $j < 12; $j++) {
                 GroupUsers::factory()->create([
                     'group_id' => $gro,
                     'user_id' => $j,
-                    "status" => "accept"
-
+                    "status" => "accept",
+                    "status_at" => now()
                 ]);
             }
 

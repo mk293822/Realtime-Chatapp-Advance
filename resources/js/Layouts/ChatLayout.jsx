@@ -1,18 +1,20 @@
 import ConversationItem from "@/Components/App/ConversationItem";
 import TextInput from "@/Components/TextInput";
+import { useEventBus } from "@/EventBus";
 import { usePage } from "@inertiajs/react";
+import axios from "axios";
 import React, { useState } from "react";
 import { useEffect } from "react";
 
 const ChatLayout = ({ children }) => {
     const page = usePage();
     const conversations = page.props.conversations;
-    const selectedConversation = null;
+    const selectedConversation = page.props.selected_conversation;
+    const { on } = useEventBus();
 
     const [sortedConversations, setSortedConversations] = useState([]);
     const [localConversations, setLocalConversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState([]);
-    const [activeTime, setActiveTime] = useState("");
 
     const onSearch = (e) => {
         const search = e.target.value.toLowerCase();
@@ -21,6 +23,17 @@ const ChatLayout = ({ children }) => {
                 return conversation.name.toLowerCase().includes(search);
             })
         );
+    };
+
+    const lastActiveTime = (user) => {
+        axios
+            .post(route("user.lastActiveTime", user))
+            .then((res) => {
+                console.log(res.data.success);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
     };
 
     const isUserOnline = (user_id) => onlineUsers[user_id];
@@ -56,7 +69,7 @@ const ChatLayout = ({ children }) => {
                     delete preOnlineUser[user.id];
                     return preOnlineUser;
                 });
-                setActiveTime(Date.now());
+                lastActiveTime(user);
             })
             .error((err) => {
                 console.log(err);
@@ -91,7 +104,6 @@ const ChatLayout = ({ children }) => {
                                 conversation={conversation}
                                 online={!!isUserOnline(conversation.id)}
                                 selectedConversation={selectedConversation}
-                                activeTime={activeTime}
                             />
                         ))}
                 </div>

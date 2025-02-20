@@ -24,6 +24,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'active',
+        'avatar',
+        'birth_date',
+        'gender'
     ];
 
     /**
@@ -58,6 +62,7 @@ class User extends Authenticatable
             "messages.message as last_message",
             "messages.created_at as last_message_date",
             "conversations.status as status",
+            "conversations.status_at as status_at",
             "conversations.id as conversation_id"
         ])
             ->where('users.id', '!=', $user_id)
@@ -68,6 +73,10 @@ class User extends Authenticatable
                         $query->on("conversations.user_id1", "=", "users.id")
                             ->where("conversations.user_id2", "=", $user_id);
                     });
+            })
+            ->where(function ($query) {
+                $query->where("conversations.status", "=", FriendStatusEnum::Accept->value)
+                    ->orWhere("conversations.status", "=", FriendStatusEnum::Block->value);
             })
             ->leftJoin("messages", "messages.id", "=", "conversations.last_message_id")
             ->orderBy('users.name')
@@ -86,10 +95,11 @@ class User extends Authenticatable
             'last_message' => $this->last_message,
             'last_message_date' => $this->last_message_date . " UTC",
             "status" => $this->status,
+            "status_at" => $this->status_at . " UTC",
             "conversation_id" => $this->conversation_id,
             'is_conversation' => true,
             "is_group" => false,
-            "active" => $this->active
+            "active" => $this->active . " UTC"
         ];
     }
 }
