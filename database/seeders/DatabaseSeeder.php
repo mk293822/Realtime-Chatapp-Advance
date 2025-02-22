@@ -38,19 +38,31 @@ class DatabaseSeeder extends Seeder
                     "status" => "accept",
                     "status_at" => now()
                 ]);
-                Message::factory(10)->create([
+                Message::factory(5)->create([
                     'sender_id' => $i,
                     'receiver_id' => $j,
                     'conversation_id' => $con,
                     'group_id' => null,
                 ]);
-
-                Conversation::where('id', $con)->update([
-                    'last_message_id' => $con * 10,
+                Message::factory(5)->create([
+                    'sender_id' => $j,
+                    'receiver_id' => $i,
+                    'conversation_id' => $con,
+                    'group_id' => null,
                 ]);
+
 
                 $con++;
             }
+        }
+
+        $conversations = Conversation::all();
+        foreach ($conversations as $conversation) {
+            $last_message_id = Message::where("conversation_id", $conversation->id)->latest()->first()->id;
+
+            $conversation->update([
+                'last_message_id' => $last_message_id,
+            ]);
         }
 
 
@@ -68,20 +80,24 @@ class DatabaseSeeder extends Seeder
                     "status" => "accept",
                     "status_at" => now()
                 ]);
+                Message::factory(10)->create([
+                    'sender_id' => $j,
+                    'receiver_id' => null,
+                    'conversation_id' => null,
+                    'group_id' => $gro,
+                ]);
             }
 
-            Message::factory(10)->create([
-                'sender_id' => null,
-                'receiver_id' => null,
-                'conversation_id' => null,
-                'group_id' => $gro,
-            ]);
-
-            Group::where('id', $gro)->update([
-                'last_message_id' => $gro * 10 + 300,
-            ]);
-
             $gro++;
+        }
+        $groups = Group::all();
+        foreach ($groups as $group) {
+
+            $last_message_id = Message::where("group_id", $group->id)->latest()->first()->id;
+
+            $group->update([
+                'last_message_id' => $last_message_id,
+            ]);
         }
     }
 }

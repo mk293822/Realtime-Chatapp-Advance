@@ -57,7 +57,7 @@ const ConversationItem = ({
                     <h3 className="text-sm font-semibold overflow-hidden text-nowrap text-ellipsis">
                         {conversation.name}
                     </h3>
-                    {conversation.active && (
+                    {conversation.active && !online && (
                         <span className="text-nowrap">
                             {formatActiveDate(conversation.active)}
                         </span>

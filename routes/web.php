@@ -13,8 +13,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/last-active-time/{user}', [ProfileController::class, 'lastActiveTime'])->name('user.lastActiveTime');
 
 
-    Route::get('/private/{conversation}', [MessageController::class, 'conversation'])->name('message.conversation');
+    Route::get('/private/{user}', [MessageController::class, 'conversation'])->name('message.conversation');
     Route::get('/group/{group}', [MessageController::class, 'group'])->name('message.group');
+
+    Route::post('/message', [MessageController::class, 'store'])->name('message.store');
 });
 
 

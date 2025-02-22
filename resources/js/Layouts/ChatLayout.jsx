@@ -38,14 +38,64 @@ const ChatLayout = ({ children }) => {
 
     const isUserOnline = (user_id) => onlineUsers[user_id];
 
+    const newMessageSend = (message) => {
+        setLocalConversations((oldUser) => {
+            return oldUser.map((u) => {
+                if (
+                    message.receiver_id &&
+                    !u.is_group &&
+                    (u.id == message.sender_id || u.id == message.receiver_id)
+                ) {
+                    u.last_message_date = message.created_at;
+                    u.last_message = message.message;
+                    return u;
+                }
+
+                if (
+                    message.group_id &&
+                    u.is_group &&
+                    u.id == message.group_id
+                ) {
+                    u.last_message_date = message.created_at;
+                    u.last_message = message.message;
+                    return u;
+                }
+                return u;
+            });
+        });
+    };
+
+    useEffect(() => {
+        const offMessageSend = on("newMessage.send", newMessageSend);
+
+        return () => {
+            offMessageSend();
+        };
+    }, [on]);
+
     useEffect(() => {
         setLocalConversations(conversations);
     }, [conversations]);
 
     useEffect(() => {
-        setSortedConversations(localConversations.sort());
+        setSortedConversations(
+            localConversations.sort((a, b) => {
+                if (a.last_message_date && b.last_message_date) {
+                    return b.last_message_date.localeCompare(
+                        a.last_message_date
+                    );
+                } else if (a.last_message_date) {
+                    return -1;
+                } else if (b.last_message_date) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            })
+        );
     }, [localConversations]);
 
+    // Online/Offline functionalities
     useEffect(() => {
         Echo.join("online")
             .here((users) => {

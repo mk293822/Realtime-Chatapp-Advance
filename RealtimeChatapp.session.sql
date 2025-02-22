@@ -1,2 +1,2 @@
-SELECT * FROM  `users`;
--- SHOW tables;p
+SELECT * FROM  `messages`;
+-- SHOW tables;

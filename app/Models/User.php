@@ -8,6 +8,7 @@ use App\Enums\FriendStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
@@ -39,6 +40,11 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'group_users', 'user_id', 'group_id');
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -84,6 +90,38 @@ class User extends Authenticatable
 
 
         return $query->get();
+    }
+
+    public function toSelectedConversation()
+    {
+        $user_id = $this->id;
+        $self_id = Auth::id();
+
+        $user = User::select([
+            'users.id',
+            'users.name',
+            'users.avatar',
+            'conversations.id as conversation_id'
+        ])
+            ->join('conversations', function ($join) use ($self_id) {
+                $join->on("conversations.user_id2", "=", "users.id")
+                    ->where("conversations.user_id1", "=", $self_id)
+                    ->orWhere(function ($query) use ($self_id) {
+                        $query->on("conversations.user_id1", "=", "users.id")
+                            ->where("conversations.user_id2", "=", $self_id);
+                    });
+            })
+            ->where('users.id', $user_id)
+            ->first();
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'avatar' => $user->avatar,
+            "conversation_id" => $user->conversation_id,
+            'is_conversation' => true,
+            "is_group" => false,
+        ];
     }
 
     public function toConversationArray()

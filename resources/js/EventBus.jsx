@@ -20,7 +20,9 @@ export const EventBusProvider = ({ children }) => {
         event[event_name].push(call_back);
 
         return () => {
-            event[event_name] = event.filter((cb) => cb !== call_back);
+            event[event_name] = event[event_name].filter(
+                (cb) => cb !== call_back
+            );
         };
     };
 

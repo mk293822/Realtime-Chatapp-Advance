@@ -6,9 +6,7 @@ const UserAvatar = ({ user, online = null, profile = false }) => {
 
     const sizeClass = profile ? " w-40 " : " w-8 ";
 
-    const avatar = useMemo(() => user.avatar, [user.avatar]);
-
-    if (user.avatar_url) {
+    if (user.avatar) {
         return (
             <div className={`chat-image avatar  ${onlineClass}`}>
                 <div className={`rounded-full  ${sizeClass}`}>

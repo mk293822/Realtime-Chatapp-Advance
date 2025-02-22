@@ -17,3 +17,45 @@ export function formatActiveDate(date) {
     if (diffInSeconds < years) return `${Math.floor(diffInSeconds / months)} month${Math.floor(diffInSeconds / months) !== 1 ? 's' : ''} ago`;
     return `${Math.floor(diffInSeconds / years)} year${Math.floor(diffInSeconds / years) !== 1 ? 's' : ''} ago`;
 }
+
+export function formatMessageDate(date) {
+    const input_date = new Date(date);
+    const now = new Date();
+    const diffDays = Math.floor((now - input_date) / (1000 * 86400));
+
+    if (diffDays === 1) return "Yesterday";
+
+    if (diffDays > 1) return input_date.toLocaleDateString();
+
+    return input_date.toLocaleTimeString();
+}
+
+
+export const isImage = (file) => {
+    let mime = file.mime || file.type;
+    mime = mime.split('/');
+    return mime[0].toLowerCase() === 'image';
+}
+export const isAudio = (file) => {
+    let mime = file.mime || file.type;
+    mime = mime.split('/');
+    return mime[0].toLowerCase() === 'audio';
+}
+export const isVideo = (file) => {
+    let mime = file.mime || file.type;
+    mime = mime.split('/');
+    return mime[0].toLowerCase() === 'video';
+}
+export const isPdf = (file) => {
+    let mime = file.mime || file.type;
+    return mime === 'application/pdf';
+}
+
+export const isPreviewAble = (attachment) => {
+    return (
+        isImage(attachment) ||
+        isVideo(attachment) ||
+        isAudio(attachment) ||
+        isPdf(attachment)
+    )
+}
