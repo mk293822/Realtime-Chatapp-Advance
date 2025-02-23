@@ -1,3 +1,4 @@
+import AttachmentModal from "@/Components/App/AttachmentModal";
 import ConversationHeader from "@/Components/App/ConversationHeader";
 import MessageInputsBar from "@/Components/App/MessageInputsBar";
 import MessageItem from "@/Components/App/MessageItem";
@@ -11,7 +12,13 @@ function Dashboard({ selected_conversation = null, messages = null }) {
     const { on } = useEventBus();
     const [localMessages, setLocalMessages] = useState([]);
     const loadMoreIntersect = useRef();
-    const onAttachmentClick = () => {};
+    const [attachmentPreview, setAttachmentPreview] = useState({});
+    const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
+
+    const onAttachmentClick = (attachments, index) => {
+        setAttachmentPreview({ attachments, index });
+        setShowAttachmentPreview(true);
+    };
 
     const newMessageSend = (message) => {
         setLocalMessages((pre) => [...pre, message]);
@@ -44,29 +51,41 @@ function Dashboard({ selected_conversation = null, messages = null }) {
 
     return (
         <>
-            <ConversationHeader conversation={selected_conversation} />
-            <div className="flex-1 overflow-y-auto p-5">
-                {localMessages.length === 0 && (
-                    <div className="flex justify-center items-center h-full">
-                        <div className="text-lg text-slate-200">
-                            No messages yet
-                        </div>
+            {messages && (
+                <>
+                    <ConversationHeader conversation={selected_conversation} />
+                    <div className="flex-1 overflow-y-auto p-5">
+                        {localMessages.length === 0 && (
+                            <div className="flex justify-center items-center h-full">
+                                <div className="text-lg text-slate-200">
+                                    No messages yet
+                                </div>
+                            </div>
+                        )}
+                        {localMessages.length > 0 && (
+                            <div className="flex-1 flex flex-col">
+                                <div ref={loadMoreIntersect}></div>
+                                {localMessages.map((message, index) => (
+                                    <MessageItem
+                                        key={index}
+                                        message={message}
+                                        attachmentClick={onAttachmentClick}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
-                )}
-                {localMessages.length > 0 && (
-                    <div className="flex-1 flex flex-col">
-                        <div ref={loadMoreIntersect}></div>
-                        {localMessages.map((message, index) => (
-                            <MessageItem
-                                key={index}
-                                message={message}
-                                attachmentClick={onAttachmentClick}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
-            <MessageInputsBar conversation={selected_conversation} />
+                    <MessageInputsBar conversation={selected_conversation} />
+                </>
+            )}
+            {attachmentPreview.attachments && (
+                <AttachmentModal
+                    show={showAttachmentPreview}
+                    attachments={attachmentPreview.attachments}
+                    index={attachmentPreview.index}
+                    onClose={() => setShowAttachmentPreview(false)}
+                />
+            )}
         </>
     );
 }

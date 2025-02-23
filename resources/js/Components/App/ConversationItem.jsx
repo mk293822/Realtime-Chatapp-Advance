@@ -1,8 +1,9 @@
 import { Link, usePage } from "@inertiajs/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import UserAvatar from "./UserAvatar";
 import GroupAvatar from "./GroupAvatar";
 import { formatActiveDate } from "@/helper";
+import { useEventBus } from "@/EventBus";
 
 const ConversationItem = ({
     conversation,
@@ -11,6 +12,25 @@ const ConversationItem = ({
 }) => {
     let classes = "border-transparent";
     const blocked = conversation.status === "block";
+
+    const { on } = useEventBus();
+
+    const [offlineDate, setOfflineDate] = useState(null);
+
+    useEffect(() => {
+        const offUserOffline = on("offline.user", (user) => {
+            if (user.id === conversation.id) setOfflineDate(user.active);
+            return;
+        });
+
+        return () => {
+            offUserOffline();
+        };
+    }, [on]);
+
+    useEffect(() => {
+        setOfflineDate(conversation.active);
+    }, []);
 
     if (selectedConversation) {
         if (
@@ -57,9 +77,9 @@ const ConversationItem = ({
                     <h3 className="text-sm font-semibold overflow-hidden text-nowrap text-ellipsis">
                         {conversation.name}
                     </h3>
-                    {conversation.active && !online && (
+                    {offlineDate && !online && (
                         <span className="text-nowrap">
-                            {formatActiveDate(conversation.active)}
+                            {formatActiveDate(offlineDate)}
                         </span>
                     )}
                 </div>

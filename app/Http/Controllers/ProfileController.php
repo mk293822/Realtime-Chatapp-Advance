@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
@@ -28,7 +29,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function lastActiveTime($user_id, Request $request)
+    public function lastActiveTime($user_id)
     {
         $user = User::find($user_id);
 
@@ -42,7 +43,7 @@ class ProfileController extends Controller
             'active' => $now->format('Y-m-d H:i:s'),
         ]);
 
-        return response()->json(['success' => "User {$user->name} is now offline at {$user->active}"]);
+        return response()->json(['user' => new UserResource($user)]);
     }
     /**
      * Update the user's profile information.

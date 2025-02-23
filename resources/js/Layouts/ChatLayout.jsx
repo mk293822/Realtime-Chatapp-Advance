@@ -1,3 +1,4 @@
+import AttachmentModal from "@/Components/App/AttachmentModal";
 import ConversationItem from "@/Components/App/ConversationItem";
 import TextInput from "@/Components/TextInput";
 import { useEventBus } from "@/EventBus";
@@ -10,7 +11,7 @@ const ChatLayout = ({ children }) => {
     const page = usePage();
     const conversations = page.props.conversations;
     const selectedConversation = page.props.selected_conversation;
-    const { on } = useEventBus();
+    const { on, emit } = useEventBus();
 
     const [sortedConversations, setSortedConversations] = useState([]);
     const [localConversations, setLocalConversations] = useState([]);
@@ -29,7 +30,8 @@ const ChatLayout = ({ children }) => {
         axios
             .post(route("user.lastActiveTime", user))
             .then((res) => {
-                console.log(res.data.success);
+                console.log(res.data);
+                emit("offline.user", res.data.user);
             })
             .catch((error) => {
                 console.log(error);
@@ -114,12 +116,14 @@ const ChatLayout = ({ children }) => {
                 });
             })
             .leaving((user) => {
-                setOnlineUsers((pre) => {
-                    const preOnlineUser = { ...pre };
-                    delete preOnlineUser[user.id];
-                    return preOnlineUser;
-                });
                 lastActiveTime(user);
+                setTimeout(() => {
+                    setOnlineUsers((pre) => {
+                        const preOnlineUser = { ...pre };
+                        delete preOnlineUser[user.id];
+                        return preOnlineUser;
+                    });
+                }, [3000]);
             })
             .error((err) => {
                 console.log(err);

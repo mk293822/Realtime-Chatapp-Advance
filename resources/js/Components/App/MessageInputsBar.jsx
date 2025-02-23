@@ -15,6 +15,8 @@ import EmojiPicker from "emoji-picker-react";
 import AudioRecorder from "./AudioRecorder";
 import axios from "axios";
 import { isAudio, isImage } from "@/helper";
+import AttachmentPreview from "./AttachmentPreview";
+import CustomAudioPlayer from "./CustomAudioPlayer";
 
 const MessageInputsBar = ({ conversation }) => {
     const [messageSending, setMessageSending] = useState();
@@ -54,16 +56,40 @@ const MessageInputsBar = ({ conversation }) => {
         axios
             .post(route("message.store"), formData, {})
             .then((res) => {
-                setMessageSending("");
+                setMessageSending(false);
                 setNewMessage("");
                 setChosenFiles([]);
             })
             .catch((err) => {
                 console.log(err);
-                setMessageSending("");
+                setMessageSending(false);
                 setNewMessage("");
                 setChosenFiles([]);
                 setInputErrorMessage(err);
+            });
+    };
+
+    const onLikeClick = () => {
+        let data = {
+            message: "👍",
+        };
+        if (conversation.is_group) {
+            data["group_id"] = conversation.id;
+        } else if (conversation.is_conversation) {
+            data["receiver_id"] = conversation.id;
+            data["conversation_id"] = conversation.conversation_id;
+        }
+
+        setMessageSending(true);
+
+        axios
+            .post(route("message.store"), data, {})
+            .then((res) => {
+                setMessageSending(false);
+            })
+            .catch((err) => {
+                console.log(err);
+                setMessageSending(false);
             });
     };
 
@@ -73,16 +99,18 @@ const MessageInputsBar = ({ conversation }) => {
         const updatedFiles = [...files].map((file) => {
             return {
                 file: file,
-                url: URL.createObjectURL(file),
+                path: path.createObjectpath(file),
             };
         });
 
         setChosenFiles((pre) => [...pre, ...updatedFiles]);
     };
 
-    const onLikeClick = () => {};
+    const recordAudioReady = (file, path) => {
+        console.log("fileReady", file);
 
-    const recordAudioReady = () => {};
+        setChosenFiles((pre) => [...pre, { file, path }]);
+    };
 
     return (
         <div className="flex flex-wrap items-center border-t border-slate-700 py-3">
@@ -138,12 +166,12 @@ const MessageInputsBar = ({ conversation }) => {
                         >
                             {isImage(file.file) && (
                                 <img
-                                    src={file.url}
+                                    src={file.path}
                                     alt=""
                                     className="w-16 h-16 object-cover"
                                 />
                             )}
-                            {/* {isAudio(file.file) && (
+                            {isAudio(file.file) && (
                                 <CustomAudioPlayer
                                     file={file}
                                     showVolume={false}
@@ -151,7 +179,7 @@ const MessageInputsBar = ({ conversation }) => {
                             )}
                             {!isAudio(file.file) && !isImage(file.file) && (
                                 <AttachmentPreview file={file} />
-                            )} */}
+                            )}
                             <button
                                 onClick={() => {
                                     setChosenFiles(

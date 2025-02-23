@@ -1,10 +1,53 @@
-import { MicrophoneIcon } from "@heroicons/react/20/solid";
+import { MicrophoneIcon, StopCircleIcon } from "@heroicons/react/20/solid";
 import React, { useState } from "react";
 
 const AudioRecorder = ({ fileReady }) => {
-    const [recording, setRecording] = useState();
+    const [recording, setRecording] = useState(false);
+    const [mediaRecorder, setMediaRecorder] = useState(null);
 
-    const onMicrophoneClick = () => {};
+    const onMicrophoneClick = async () => {
+        if (recording) {
+            setRecording(false);
+            if (mediaRecorder) {
+                mediaRecorder.stop();
+                setMediaRecorder(null);
+            }
+            return;
+        }
+        setRecording(true);
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+            });
+
+            const chunks = [];
+
+            const newMediaRecorder = new MediaRecorder(stream);
+
+            newMediaRecorder.addEventListener("dataavailable", (event) => {
+                chunks.push(event.data);
+            });
+
+            newMediaRecorder.addEventListener("stop", (event) => {
+                let audioBlob = new Blob(chunks, {
+                    type: "audio/ogg; codecs=opus",
+                });
+                let audioFile = new File([audioBlob], "recorded_audio.ogg", {
+                    type: "audio/ogg; codecs=opus",
+                });
+                const path = URL.createObjectURL(audioFile);
+
+                fileReady(audioFile, path);
+            });
+
+            newMediaRecorder.start();
+            setMediaRecorder(newMediaRecorder);
+        } catch (error) {
+            setRecording(false);
+            console.log(error);
+        }
+    };
 
     return (
         <button

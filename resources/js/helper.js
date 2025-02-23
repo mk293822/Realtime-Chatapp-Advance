@@ -46,7 +46,7 @@ export const isVideo = (file) => {
     mime = mime.split('/');
     return mime[0].toLowerCase() === 'video';
 }
-export const isPdf = (file) => {
+export const isPDF = (file) => {
     let mime = file.mime || file.type;
     return mime === 'application/pdf';
 }
@@ -56,6 +56,15 @@ export const isPreviewAble = (attachment) => {
         isImage(attachment) ||
         isVideo(attachment) ||
         isAudio(attachment) ||
-        isPdf(attachment)
+        isPDF(attachment)
     )
 }
+
+export const formatBytes = (size) => {
+    if (size === 0) return "0 B"; // Handle zero bytes case
+
+    const sizeUnits = ["B", "KB", "MB", "GB", "TB", "PB"];
+    const i = Math.floor(Math.log(size) / Math.log(1024));
+
+    return `${(size / Math.pow(1024, i)).toFixed(2)} ${sizeUnits[i]}`;
+};
