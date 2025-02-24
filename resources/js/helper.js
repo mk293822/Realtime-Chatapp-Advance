@@ -30,6 +30,16 @@ export function formatMessageDate(date) {
     return input_date.toLocaleTimeString();
 }
 
+export function debounce(func, delay) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            func(...args);
+        }, delay)
+    }
+}
+
 
 export const isImage = (file) => {
     let mime = file.mime || file.type;

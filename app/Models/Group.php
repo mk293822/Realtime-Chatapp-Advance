@@ -11,6 +11,13 @@ class Group extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'name',
+        'description',
+        'owner_id',
+        'last_message_id'
+    ];
+
     public static function boot()
     {
         parent::boot();
@@ -24,6 +31,10 @@ class Group extends Model
         });
     }
 
+    public function lastMessage()
+    {
+        return $this->belongsTo(Message::class, 'last_message_id');
+    }
 
     public function group_users()
     {

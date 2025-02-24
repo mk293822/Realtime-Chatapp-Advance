@@ -3,6 +3,7 @@ import ConversationHeader from "@/Components/App/ConversationHeader";
 import MessageInputsBar from "@/Components/App/MessageInputsBar";
 import MessageItem from "@/Components/App/MessageItem";
 import { useEventBus } from "@/EventBus";
+import { debounce } from "@/helper";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import ChatLayout from "@/Layouts/ChatLayout";
 import { ChatBubbleLeftEllipsisIcon } from "@heroicons/react/20/solid";
@@ -19,31 +20,37 @@ function Dashboard({ selected_conversation = null, messages = null }) {
     const [noMoreMessages, setNoMoreMessages] = useState(false);
     const [scrollFromBottom, setScrollFromBottom] = useState();
 
-    const loadMoreMessages = useCallback(() => {
-        if (noMoreMessages) return;
+    const loadMoreMessages = useCallback(
+        debounce(() => {
+            if (noMoreMessages) return;
 
-        const firstMessage = localMessages[0];
+            const firstMessage = localMessages[0];
 
-        if (firstMessage) {
-            axios
-                .get(route("message.loadMoreMessage", firstMessage.id))
-                .then(({ data }) => {
-                    if (data.data.length === 0) {
-                        setNoMoreMessages(true);
-                        return;
-                    }
+            if (firstMessage) {
+                axios
+                    .get(route("message.loadMoreMessage", firstMessage.id))
+                    .then(({ data }) => {
+                        if (data.messages === "noMoreMessages") {
+                            setNoMoreMessages(true);
+                            return;
+                        }
 
-                    const scrollHeight = messageCtrRef.current.scrollHeight;
-                    const scrollTop = messageCtrRef.current.scrollTop;
-                    const clientHeight = messageCtrRef.current.clientHeight;
-                    const tmpScrollFromBottom =
-                        scrollHeight - scrollTop - clientHeight;
-                    setScrollFromBottom(tmpScrollFromBottom);
+                        const scrollHeight = messageCtrRef.current.scrollHeight;
+                        const scrollTop = messageCtrRef.current.scrollTop;
+                        const clientHeight = messageCtrRef.current.clientHeight;
+                        const tmpScrollFromBottom =
+                            scrollHeight - scrollTop - clientHeight;
+                        setScrollFromBottom(tmpScrollFromBottom);
 
-                    setLocalMessages((pre) => [...data.data.reverse(), ...pre]);
-                });
-        }
-    }, [localMessages, noMoreMessages]);
+                        setLocalMessages((pre) => [
+                            ...data.messages.reverse(),
+                            ...pre,
+                        ]);
+                    });
+            }
+        }, 300),
+        [localMessages, noMoreMessages]
+    );
 
     useEffect(() => {
         if (messageCtrRef.current && scrollFromBottom !== null) {
@@ -55,18 +62,18 @@ function Dashboard({ selected_conversation = null, messages = null }) {
 
         if (noMoreMessages) return;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(
-                (entry) => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         loadMoreMessages();
                     }
-                },
-                {
-                    rootMargin: "0px 0px 250px 0px",
-                }
-            );
-        });
+                });
+            },
+            {
+                rootMargin: "0px 0px 250px 0px",
+            }
+        );
 
         setTimeout(() => {
             if (loadMoreIntersect.current) {
@@ -98,16 +105,23 @@ function Dashboard({ selected_conversation = null, messages = null }) {
         toBottom();
     };
 
+    const messageDeleted = ({ message }) => {
+        setLocalMessages((pre) => pre.filter((mes) => mes.id !== message.id));
+        toBottom();
+    };
+
     useEffect(() => {
         toBottom();
 
         const offMessageSend = on("newMessage.send", newMessageSend);
+        const offMessageDelete = on("newMessage.delete", messageDeleted);
 
         setScrollFromBottom(0);
         setNoMoreMessages(false);
 
         return () => {
             offMessageSend();
+            offMessageDelete();
         };
     }, [selected_conversation]);
 

@@ -67,11 +67,18 @@ const ChatLayout = ({ children }) => {
         });
     };
 
+    const messageDeleted = ({ preMessage }) => {
+        if (!preMessage) return;
+        newMessageSend(preMessage);
+    };
+
     useEffect(() => {
         const offMessageSend = on("newMessage.send", newMessageSend);
+        const offMessageDelete = on("newMessage.delete", messageDeleted);
 
         return () => {
             offMessageSend();
+            offMessageDelete();
         };
     }, [on]);
 
@@ -135,7 +142,7 @@ const ChatLayout = ({ children }) => {
     }, []);
 
     return (
-        <div className="flex-1 w-full flex h-[calc(100vh-64.67px)]">
+        <div className="flex-1 w-full flex h-screen">
             <div
                 className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
                     selectedConversation ? "-ml-[100%] sm:ml-0" : ""

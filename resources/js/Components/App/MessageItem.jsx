@@ -36,10 +36,10 @@ const MessageItem = ({ message, attachmentClick }) => {
                         : "")
                 }
             >
-                {/* {message.sender_id == currentUser.id && (
+                {message.sender_id == currentUser.id && (
                     <MessageOptionDropdown message={message} />
-                )} */}
-                {message.attachments && (
+                )}
+                {message.attachments.length > 0 && (
                     <MessageAttachment
                         attachments={message.attachments}
                         attachmentClick={attachmentClick}

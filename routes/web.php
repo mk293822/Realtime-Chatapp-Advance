@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/private/{user}', [MessageController::class, 'conversation'])->name('message.conversation');
     Route::get('/group/{group}', [MessageController::class, 'group'])->name('message.group');
 
+    Route::delete('/message/{message}', [MessageController::class, 'destroy'])->name('message.destroy');
     Route::post('/message', [MessageController::class, 'store'])->name('message.store');
     Route::get('/message/{message}', [MessageController::class, 'loadMoreMessage'])->name('message.loadMoreMessage');
 });

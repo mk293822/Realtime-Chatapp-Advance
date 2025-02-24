@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+use function PHPUnit\Framework\isEmpty;
+
 class MessageController extends Controller
 {
     /**
@@ -96,15 +98,53 @@ class MessageController extends Controller
     }
 
 
+    public function destroy(Message $message)
+    {
+        if ($message->sender_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $group = null;
+        $conversation = null;
+
+        if ($message->group_id) {
+            $group = Group::where('last_message_id', $message->id)->first();
+        } else {
+            $conversation = Conversation::where('last_message_id', $message->id)->first();
+        }
+
+        $status = "delete";
+
+        $deleted_message = $message;
+
+        $message->delete();
+        $lastMessage = null;
+
+        if ($group) {
+            $group = Group::find($group->id);
+            $lastMessage = $group->lastMessage;
+        }
+        if ($conversation) {
+            $conversation = Conversation::find($conversation->id);
+            $lastMessage = $conversation->lastMessage;
+        }
+
+        MessageSend::dispatch($deleted_message, $status, $lastMessage);
+
+        return response()->json(['message' => $lastMessage !== null ? new MessageResource($lastMessage) : null], 200);
+    }
+
+
+
     public function loadMoreMessage(Message $message)
     {
         if ($message->group_id) {
-            $messages = Message::where('created_at', '<', $message->created_at)
+            $mes = Message::where('created_at', '<', $message->created_at)
                 ->where('group_id', $message->group_id)
                 ->latest()
                 ->paginate(10);
         } else {
-            $messages = Message::where('created_at', '<', $message->created_at)
+            $mes = Message::where('created_at', '<', $message->created_at)
                 ->where(function ($query) use ($message) {
                     $query->where('sender_id', $message->sender_id)
                         ->where('receiver_id', $message->receiver_id)
@@ -115,6 +155,11 @@ class MessageController extends Controller
                 ->paginate(10);
         }
 
-        return MessageResource::collection($messages);
+        $messages = MessageResource::collection($mes);
+
+        if (!$messages->isEmpty()) return response()->json(["messages" => $messages]);
+        if ($messages->isEmpty()) {
+            return response()->json(["messages" => "noMoreMessages"]);
+        }
     }
 }
