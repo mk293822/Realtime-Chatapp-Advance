@@ -36,13 +36,15 @@ const MessageItem = ({ message, attachmentClick }) => {
                         : "")
                 }
             >
-                {message.sender_id == currentUser.id && (
+                {/* {message.sender_id == currentUser.id && (
                     <MessageOptionDropdown message={message} />
+                )} */}
+                {message.attachments && (
+                    <MessageAttachment
+                        attachments={message.attachments}
+                        attachmentClick={attachmentClick}
+                    />
                 )}
-                <MessageAttachment
-                    attachments={message.attachments}
-                    attachmentClick={attachmentClick}
-                />
                 {message.message !== null && (
                     <div className="chat-message">
                         <div className="chat-message-content">

@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/group/{group}', [MessageController::class, 'group'])->name('message.group');
 
     Route::post('/message', [MessageController::class, 'store'])->name('message.store');
+    Route::get('/message/{message}', [MessageController::class, 'loadMoreMessage'])->name('message.loadMoreMessage');
 });
 
 

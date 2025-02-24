@@ -94,4 +94,27 @@ class MessageController extends Controller
 
         return new MessageResource($message);
     }
+
+
+    public function loadMoreMessage(Message $message)
+    {
+        if ($message->group_id) {
+            $messages = Message::where('created_at', '<', $message->created_at)
+                ->where('group_id', $message->group_id)
+                ->latest()
+                ->paginate(10);
+        } else {
+            $messages = Message::where('created_at', '<', $message->created_at)
+                ->where(function ($query) use ($message) {
+                    $query->where('sender_id', $message->sender_id)
+                        ->where('receiver_id', $message->receiver_id)
+                        ->orWhere('sender_id', $message->receiver_id)
+                        ->where('receiver_id', $message->sender_id);
+                })
+                ->latest()
+                ->paginate(10);
+        }
+
+        return MessageResource::collection($messages);
+    }
 }
