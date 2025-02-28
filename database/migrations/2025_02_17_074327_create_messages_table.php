@@ -18,6 +18,11 @@ return new class extends Migration
             $table->longText('message')->nullable();
             $table->foreignId('sender_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->foreignId('receiver_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->boolean('delete_for_sender')->default(false);
+            $table->boolean('delete_for_receiver')->default(false);
+            $table->boolean('is_seen')->default(false);
+            $table->boolean('is_saved')->default(false);
+            $table->foreignId('saved_by')->nullable()->constrained('users');
             $table->timestamps();
         });
 

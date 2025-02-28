@@ -4,14 +4,16 @@ import UserAvatar from "./UserAvatar";
 import GroupAvatar from "./GroupAvatar";
 import { formatActiveDate } from "@/helper";
 import { useEventBus } from "@/EventBus";
+import { MapPinIcon } from "@heroicons/react/20/solid";
 
 const ConversationItem = ({
     conversation,
     selectedConversation = null,
     online = null,
+    handleContextMenu = () => {},
 }) => {
     let classes = "border-transparent";
-    const blocked = conversation.status === "block";
+    const blocked = conversation.block;
 
     const { on } = useEventBus();
 
@@ -58,9 +60,11 @@ const ConversationItem = ({
             }
             preserveState
             className={
-                "conversation-item transition-all flex items-center gap-2 p-2 cursor-pointer border-1 hover:bg-black/30 " +
-                classes
+                `conversation-item px-2 transition-all flex items-center gap-2 p-2 cursor-pointer border-1 hover:bg-black/30 ${
+                    conversation.block ? " opacity-50 " : ""
+                }` + classes
             }
+            onContextMenu={(e) => handleContextMenu(e, conversation)}
         >
             {conversation.is_conversation && (
                 <UserAvatar user={conversation} online={online} />
@@ -83,11 +87,16 @@ const ConversationItem = ({
                         </span>
                     )}
                 </div>
-                {conversation.last_message && (
-                    <p className="text-xs text-gray-500 text-nowrap overflow-hidden text-ellipsis">
-                        {conversation.last_message}
-                    </p>
-                )}
+                <div className="flex items-center justify-between">
+                    {conversation.last_message && (
+                        <p className="text-xs text-gray-500 text-nowrap overflow-hidden text-ellipsis">
+                            {conversation.last_message}
+                        </p>
+                    )}
+                    {conversation.pin && (
+                        <MapPinIcon className="size-5 text-blue-600" />
+                    )}
+                </div>
             </div>
         </Link>
     );

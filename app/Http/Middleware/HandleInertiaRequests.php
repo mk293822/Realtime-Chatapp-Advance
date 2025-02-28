@@ -34,12 +34,11 @@ class HandleInertiaRequests extends Middleware
         $user = Auth::user();
         $conversations = $user ? Conversation::getConversationsForSidebar($user) : null;
 
-        // dd($conversations);
 
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
             'conversations' => $conversations,
         ];

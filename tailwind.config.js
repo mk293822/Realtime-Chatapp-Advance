@@ -11,19 +11,21 @@ export default {
         './resources/js/**/*.jsx',
     ],
 
+    darkMode: 'class',
+
     theme: {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
             screens: {
-                xs: "420px",
+                xs: "490px",
                 sm: "680px",
                 md: "768px",
                 lg: "1024px",
                 xl: "1280px",
                 "2xl": "1536px",
-            }
+            },
         },
     },
 

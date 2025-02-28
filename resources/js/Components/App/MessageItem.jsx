@@ -1,20 +1,28 @@
 import { formatMessageDate } from "@/helper";
 import { usePage } from "@inertiajs/react";
-import React from "react";
+import React, { useRef, useState } from "react";
 import ReactMarkDown from "react-markdown";
 import UserAvatar from "./UserAvatar";
 import MessageAttachment from "./MessageAttachment";
-import MessageOptionDropdown from "./MessageOptionDropdown";
+import { useEventBus } from "@/EventBus";
 
 const MessageItem = ({ message, attachmentClick }) => {
     const currentUser = usePage().props.auth.user;
+    const { emit } = useEventBus();
 
     const date = formatMessageDate(message.created_at);
+
+    const handleContextMenu = (e) => {
+        e.preventDefault();
+        const { pageX, pageY } = e;
+        const context = { message: message, x: pageX, y: pageY, show: true };
+        emit("contextMenu", context);
+    };
 
     return (
         <div
             className={
-                "chat " +
+                "chat z-0 " +
                 (message.sender_id === currentUser.id
                     ? " chat-end"
                     : " chat-start")
@@ -29,6 +37,7 @@ const MessageItem = ({ message, attachmentClick }) => {
             </div>
 
             <div
+                onContextMenu={handleContextMenu}
                 className={
                     "chat-bubble relative " +
                     (message.sender_id === currentUser.id
@@ -36,9 +45,6 @@ const MessageItem = ({ message, attachmentClick }) => {
                         : "")
                 }
             >
-                {message.sender_id == currentUser.id && (
-                    <MessageOptionDropdown message={message} />
-                )}
                 {message.attachments.length > 0 && (
                     <MessageAttachment
                         attachments={message.attachments}

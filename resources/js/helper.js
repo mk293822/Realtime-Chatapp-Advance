@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 export function formatActiveDate(date) {
     const now = new Date();
     const inputDate = new Date(date);
@@ -38,6 +40,24 @@ export function debounce(func, delay) {
             func(...args);
         }, delay)
     }
+}
+
+
+export const handleOutsideClick = (ref, callback = () => { }) => {
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (ref.current && ref.current.contains(e.target)) {
+                return;
+            }
+            callback();
+        }
+        document.addEventListener('mousedown', handleClick);
+        document.addEventListener('touchstart', handleClick);
+        return () => {
+            document.removeEventListener('mousedown', handleClick);
+            document.removeEventListener('touchstart', handleClick);
+        }
+    }, [callback]);
 }
 
 

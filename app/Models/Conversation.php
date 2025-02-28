@@ -52,16 +52,14 @@ class Conversation extends Model
         $users = User::getExceptUser($exceptUser);
         $groups = Group::getExceptUser($exceptUser);
 
+
         $conversations = $users->map(function (User $user) {
             return $user->toConversationArray();
         })->concat($groups->map(function (Group $group) {
             return $group->toConversationArray();
         }));
 
-        $statuses = [FriendStatusEnum::Accept->value => 1, FriendStatusEnum::Block->value => 2];
 
-        return $conversations->sortBy(function ($con) use ($statuses) {
-            return $statuses[$con['status']] ?? 3;
-        });
+        return $conversations;
     }
 }

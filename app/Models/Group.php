@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Enums\FriendStatusEnum;
+use App\Http\Resources\UserResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class Group extends Model
 {
@@ -48,18 +50,64 @@ class Group extends Model
 
     public static function getExceptUser(User $user): object
     {
-        $query = self::select('groups.*', 'messages.message as last_message', 'messages.created_at as last_message_date', "group_users.status as status")
+        $query = Group::select([
+            'groups.*',
+            'messages.message as last_message',
+            'messages.created_at as last_message_date',
+            "user_conversations_statuses.pin as pin",
+            "user_conversations_statuses.archived as archived",
+            "user_conversations_statuses.mute as mute",
+            "group_users.accept as accept",
+            "group_users.reject as reject",
+            "group_users.pending as pending",
+            'group_users.status_at as status_at',
+        ])
             ->join('group_users', 'group_users.group_id', '=', 'groups.id')
-            ->leftJoin('messages', 'messages.id', '=', 'groups.last_message_id')
             ->where('group_users.user_id', $user->id)
-            ->where(function ($query) {
-                $query->where("group_users.status", "=", FriendStatusEnum::Accept->value)
-                    ->orWhere("group_users.status", "=", FriendStatusEnum::Block->value);
+            ->leftJoin('messages', 'messages.id', '=', 'groups.last_message_id')
+            ->join("user_conversations_statuses", function ($join) use ($user) {
+                $join->on("user_conversations_statuses.group_id", "=", "groups.id")
+                    ->where("user_conversations_statuses.user_id", "=", $user->id);
             })
             ->orderBy('messages.created_at', 'desc')
-            ->orderBy('groups.name');
+            ->orderBy('groups.name')
+            ->orderBy("user_conversations_statuses.pin", "desc");
+
 
         return $query->get();
+    }
+
+    public function toSelectedConversationArray()
+    {
+        $group_id = $this->id;
+        $self_id = Auth::id();
+
+        $query = Group::select([
+            'groups.*',
+            "user_conversations_statuses.pin as pin",
+            "user_conversations_statuses.archived as archived",
+            "user_conversations_statuses.mute as mute",
+        ])
+            ->where("groups.id", "=", $group_id)
+            ->join("user_conversations_statuses", function ($join) use ($self_id) {
+                $join->on("user_conversations_statuses.group_id", "=", "groups.id")
+                    ->where("user_conversations_statuses.user_id", "=", $self_id);
+            })
+            ->orderBy('groups.name')
+            ->orderBy("user_conversations_statuses.pin", "desc")->first();
+
+        return [
+            'id' => $query->id,
+            'name' => $query->name,
+            'avatar' => $query->avatar,
+            "owner" => (new UserResource($query->owner))->toArray(request()),
+            "group_users" => UserResource::collection(collect($query->group_users->pluck('user')))->toArray(request()),
+            'is_conversation' => false,
+            "is_group" => true,
+            'pin'      => $query->pin == 1 ?? false,
+            'archived' => $query->archived == 1 ?? false,
+            'mute'     => $query->mute == 1 ?? false,
+        ];
     }
 
     public function toConversationArray()
@@ -68,23 +116,19 @@ class Group extends Model
             'id' => $this->id,
             'name' => $this->name,
             'avatar' => $this->avatar,
-            "owner" => $this->owner,
-            "group_users" => $this->group_users()->get()->map(function ($group_user) {
-                $user = $group_user->user;
-                return [
-                    "name" => $user->name,
-                    "id" => $user->id,
-                    "active" => $user->active,
-                    "avatar" => $user->avatar,
-                    "status" => $group_user->status,
-                    "status_at" => $group_user->status_at . " UTC",
-                ];
-            }),
-            "status" => $this->status,
+            "owner" => (new UserResource($this->owner))->toArray(request()),
+            "group_users" => UserResource::collection(collect($this->group_users->pluck('user')))->toArray(request()),
             'last_message' => $this->last_message,
             'last_message_date' => $this->last_message_date . " UTC",
             'is_conversation' => false,
             "is_group" => true,
+            'pin'      => $this->pin == 1 ?? false,
+            'archived' => $this->archived == 1 ?? false,
+            'mute'     => $this->mute == 1 ?? false,
+            'accept'   => $this->accept == 1 ?? false,
+            'reject'   => $this->reject == 1 ?? false,
+            'pending'  => $this->pending == 1 ?? false,
+            'status_at' => $this->status_at . " UTC",
         ];
     }
 }

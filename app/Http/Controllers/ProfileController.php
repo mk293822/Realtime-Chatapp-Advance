@@ -23,10 +23,23 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('Profile/Edit', [
+        return inertia('Dashboard', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
         ]);
+    }
+
+    public function darkMode(User $user)
+    {
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $user->dark_mode = !$user->dark_mode;
+        $user->save();
+
+        return response()->json(['dark_mode' => $user->dark_mode]);
     }
 
     public function lastActiveTime($user_id)

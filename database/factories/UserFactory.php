@@ -27,6 +27,7 @@ class UserFactory extends Factory
             'name' => fake()->name(), // Generates a random name
             'email' => fake()->unique()->safeEmail(), // Generates a unique, safe email address
             'birth_date' => fake()->date(), // Generates a random date for birth
+            'bio' => fake()->sentence(), // Generates a random sentence for bio
             'gender' => fake()->randomElement(['Male', 'Female']), // Randomly selects 'Male' or 'Female' from the list
             'email_verified_at' => now(), // Sets the current time for email verification
             'password' => static::$password ??= Hash::make('password'), // Uses a default password (hashed) or a pre-existing static password

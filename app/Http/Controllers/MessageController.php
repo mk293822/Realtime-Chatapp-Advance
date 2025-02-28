@@ -36,13 +36,14 @@ class MessageController extends Controller
             "selected_conversation" => $user->toSelectedConversation(),
         ]);
     }
+
     public function group(Group $group)
     {
         $messages = Message::where("group_id", $group->id)->latest()->paginate(10);
 
         return inertia("Dashboard", [
             "messages" => MessageResource::collection($messages),
-            "selected_conversation" => $group->toConversationArray(),
+            "selected_conversation" => $group->toSelectedConversationArray(),
         ]);
     }
 
@@ -97,8 +98,8 @@ class MessageController extends Controller
         return new MessageResource($message);
     }
 
-
     public function destroy(Message $message)
+
     {
         if ($message->sender_id !== auth()->id()) {
             return response()->json(['message' => 'Unauthorized'], 401);
@@ -134,8 +135,6 @@ class MessageController extends Controller
         return response()->json(['message' => $lastMessage !== null ? new MessageResource($lastMessage) : null], 200);
     }
 
-
-
     public function loadMoreMessage(Message $message)
     {
         if ($message->group_id) {
@@ -161,5 +160,15 @@ class MessageController extends Controller
         if ($messages->isEmpty()) {
             return response()->json(["messages" => "noMoreMessages"]);
         }
+    }
+
+    public function save(Message $message)
+    {
+        $message->is_saved = !$message->is_saved;
+        $message->saved_by = auth()->id();
+        $message->save();
+
+        $message->refresh();
+        return response()->json(["is_saved" => $message->is_saved === 1 ? true : false]);
     }
 }

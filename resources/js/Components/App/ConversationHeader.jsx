@@ -11,19 +11,15 @@ import { Link } from "@inertiajs/react";
 
 const ConversationHeader = ({ conversation }) => {
     return (
-        <div className="p-4 px-4 flex items-center justify-between border-b border-gray-600">
+        <div className="p-4 px-4 flex items-center justify-between shadow-lg shadow-black/60">
             <div className="flex gap-4 justify-center items-center">
                 <Link href="/" className="">
                     <ArrowLeftIcon className="size-6" />
                 </Link>
-                <div className="">
-                    {conversation.is_conversation && (
-                        <UserAvatar user={conversation} />
-                    )}
-                    {conversation.is_group && (
-                        <GroupAvatar user={conversation} />
-                    )}
-                </div>
+                {conversation.is_conversation && (
+                    <UserAvatar user={conversation} />
+                )}
+                {conversation.is_group && <GroupAvatar user={conversation} />}
                 <span>{conversation.name}</span>
             </div>
             <div className="flex gap-4 items-center justify-center">

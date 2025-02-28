@@ -107,7 +107,11 @@ function Dashboard({ selected_conversation = null, messages = null }) {
 
     const messageDeleted = ({ message }) => {
         setLocalMessages((pre) => pre.filter((mes) => mes.id !== message.id));
-        toBottom();
+        const scrollHeight = messageCtrRef.current.scrollHeight;
+        const scrollTop = messageCtrRef.current.scrollTop;
+        const clientHeight = messageCtrRef.current.clientHeight;
+        const tmpScrollFromBottom = scrollHeight - scrollTop - clientHeight;
+        setScrollFromBottom(tmpScrollFromBottom);
     };
 
     useEffect(() => {
@@ -133,7 +137,7 @@ function Dashboard({ selected_conversation = null, messages = null }) {
         return (
             <div className="flex flex-col gap-6 mx-auto my-auto text-center text-gray-600">
                 <span className="font-bold text-2xl">
-                    No Conversation Selected
+                    No Conversation Is Selected
                 </span>
                 <span>
                     <ChatBubbleLeftEllipsisIcon className="size-20 mx-auto" />
