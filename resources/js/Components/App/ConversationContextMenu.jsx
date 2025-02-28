@@ -1,3 +1,4 @@
+import { useEventBus } from "@/EventBus";
 import { handleOutsideClick } from "@/helper";
 import { Transition } from "@headlessui/react";
 import {
@@ -19,6 +20,7 @@ const ConversationContextMenu = ({
     handleStatus = () => {},
 }) => {
     const contentRef = useRef(null);
+    const { emit } = useEventBus();
 
     const [pinned, setPinned] = useState(false);
     const [archived, setArchived] = useState(false);
@@ -30,16 +32,30 @@ const ConversationContextMenu = ({
             setPinned(conversation.pin);
             setArchived(conversation.archived);
             setMuted(conversation.mute);
+            setBlocked(conversation.block);
         }
     }, [conversation]);
 
     useEffect(() => {
         setPosition({ x, y });
-    }, [close]);
+    }, [x, y]);
 
     const [position, setPosition] = useState({ x: 0, y: 0 });
 
     handleOutsideClick(contentRef, close);
+
+    const handleBlock = () => {
+        axios
+            .post(route("conversation.block"), {
+                conversation_id: conversation.conversation_id,
+            })
+            .then((res) => {
+                const block_conversation = res.data.conversation;
+                emit("conversation.block", block_conversation);
+            })
+            .catch((err) => console.log(err));
+        close();
+    };
 
     return (
         <>
@@ -54,9 +70,11 @@ const ConversationContextMenu = ({
                 leaveTo="opacity-0 scale-95"
                 className={"absolute z-[100]"}
                 style={{ top: `${position.y}px`, left: `${position.x}px` }}
-                ref={contentRef}
             >
-                <div className=" min-w-[180px] p-2 rounded-lg dark:shadow-none dark:text-gray-200 text-gray-800 shadow-gray-400 bg-gray-200 dark:bg-gray-800 shadow-lg">
+                <div
+                    ref={contentRef}
+                    className=" min-w-[180px] p-2 rounded-lg dark:shadow-none dark:text-gray-200 text-gray-800 shadow-gray-400 bg-gray-200 dark:bg-gray-800 shadow-lg"
+                >
                     <div className="py-1">
                         <button
                             onClick={() => handleStatus("pin")}
@@ -82,15 +100,17 @@ const ConversationContextMenu = ({
                             </span>
                             Delete
                         </button>
-                        <button
-                            onClick={() => handleStatus("block")}
-                            className="flex w-full items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-400 dark:hover:bg-gray-700 cursor-pointer transition-all"
-                        >
-                            <span className="mr-2">
-                                <NoSymbolIcon className="size-4" />
-                            </span>
-                            {blocked ? "Unblock" : "Block"}
-                        </button>
+                        {conversation && !conversation.is_group && (
+                            <button
+                                onClick={handleBlock}
+                                className="flex w-full items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-400 dark:hover:bg-gray-700 cursor-pointer transition-all"
+                            >
+                                <span className="mr-2">
+                                    <NoSymbolIcon className="size-4" />
+                                </span>
+                                {blocked ? "Unblock" : "Block"}
+                            </button>
+                        )}
                         <button
                             onClick={() => handleStatus("mute")}
                             className="flex w-full items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-400 dark:hover:bg-gray-700 cursor-pointer transition-all"

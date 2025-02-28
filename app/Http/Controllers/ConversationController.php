@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\Group;
 use Illuminate\Http\Request;
 
 class ConversationController extends Controller
@@ -21,9 +22,18 @@ class ConversationController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Conversation $conversation)
+    public function block(Request $request)
     {
-        //
+        $conversation_id = $request->input("conversation_id");
+        $user_id = $request->user()->id;
+
+        $update_conversation = Conversation::where("id", $conversation_id)->first();
+
+        $update_conversation->blocked_by = $user_id;
+        $update_conversation->block = !$update_conversation->block;
+        $update_conversation->save();
+
+        return response()->json(["conversation" => $update_conversation]);
     }
 
     /**

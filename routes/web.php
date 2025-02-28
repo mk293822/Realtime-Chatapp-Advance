@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
@@ -20,6 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/message', [MessageController::class, 'store'])->name('message.store');
     Route::post('/message/{message}', [MessageController::class, 'save'])->name('message.save');
     Route::get('/message/{message}', [MessageController::class, 'loadMoreMessage'])->name('message.loadMoreMessage');
+
+    Route::post('/conversation', [ConversationController::class, 'block'])->name('conversation.block');
 });
 
 

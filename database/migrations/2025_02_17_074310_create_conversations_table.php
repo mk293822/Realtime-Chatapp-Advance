@@ -22,6 +22,7 @@ return new class extends Migration
             $table->boolean('pending')->default(false);
             $table->boolean('block')->default(false);
             $table->timestamp('status_at')->nullable();
+            $table->foreignId("blocked_by")->nullable()->constrained("users");
             $table->timestamps();
         });
     }

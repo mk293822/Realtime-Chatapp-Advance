@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->longText('description')->nullable();
             $table->string('avatar')->nullable();
-            $table->boolean('block')->default(false);
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
         });
         Schema::create('group_users', function (Blueprint $table) {
@@ -29,6 +28,7 @@ return new class extends Migration
             $table->boolean('reject')->default(false);
             $table->boolean('pending')->default(false);
             $table->timestamp('status_at')->nullable();
+            $table->boolean('block')->default(false);
         });
     }
 

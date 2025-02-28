@@ -81,6 +81,7 @@ class User extends Authenticatable
             "conversations.accept as accept",
             "conversations.reject as reject",
             "conversations.pending as pending",
+            "conversations.block as block",
             'conversations.status_at as status_at',
             "conversations.request_by as request_by",
             "conversations.status_by as status_by",
@@ -178,6 +179,7 @@ class User extends Authenticatable
             'pin'               => $this->pin == 1 ?? false,
             'archived'          => $this->archived == 1 ?? false,
             'mute'              => $this->mute == 1 ?? false,
+            'block'              => $this->block == 1 ?? false,
             'is_conversation'   => true,
             'is_group'          => false,
         ];

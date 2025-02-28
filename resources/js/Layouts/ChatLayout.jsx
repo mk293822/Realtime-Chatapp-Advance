@@ -34,6 +34,7 @@ const ChatLayout = ({ children }) => {
     const [conversationContextMenu, setConversationContextMenu] =
         useState(initialContextMenu);
     const [showArchived, setShowArchived] = useState(false);
+    const [statusUpdated, setStatusUpdated] = useState(false);
 
     const sidebar_button = document.getElementById("my-drawer");
 
@@ -97,15 +98,34 @@ const ChatLayout = ({ children }) => {
         if (sidebar_button) sidebar_button.checked = !sidebar_button.checked;
     };
 
+    const handleBlockConversation = (block_conversation) => {
+        setLocalConversations((pre) =>
+            pre.map((con) => {
+                if (
+                    !con.is_group &&
+                    con.conversation_id === block_conversation.id
+                ) {
+                    return { ...con, block: block_conversation.block };
+                }
+                return con;
+            })
+        );
+    };
+
     useEffect(() => {
         const offMessageSend = on("newMessage.send", newMessageSend);
         const offMessageDelete = on("newMessage.delete", messageDeleted);
         const offArchivedShow = on("archived.show", handle_archived_show);
+        const offConversationBlock = on(
+            "conversation.block",
+            handleBlockConversation
+        );
 
         return () => {
             offMessageSend();
             offMessageDelete();
             offArchivedShow();
+            offConversationBlock();
         };
     }, [on]);
 
@@ -153,6 +173,7 @@ const ChatLayout = ({ children }) => {
                 })
                 .filter((con) => (showArchived ? con.archived : !con.archived))
         );
+        if (showArchived) setStatusUpdated(true);
     }, [localConversations, showArchived]);
 
     // Online/Offline functionalities
@@ -249,16 +270,13 @@ const ChatLayout = ({ children }) => {
                 return con;
             })
         );
-        emit(
-            "conversation.block",
-            sortedConversations.find((con) => con.id === conversation.id)
-        );
     };
 
     useEffect(() => {
-        if (showArchived)
-            if (sortedConversations.length === 0) setShowArchived(false);
-    }, [showArchived, sortedConversations]);
+        if (statusUpdated && showArchived && sortedConversations.length === 0)
+            setShowArchived(false);
+        setStatusUpdated(false);
+    }, [showArchived, sortedConversations, statusUpdated]);
     //end
 
     return (

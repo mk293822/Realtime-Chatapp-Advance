@@ -1,2 +1,2 @@
-SELECT * FROM  `user_conversations_statuses`;
+SELECT * FROM  `conversations`;
 -- SHOW tables;
