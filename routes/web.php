@@ -3,10 +3,8 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
-use App\Models\UserConversationsStatusController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\UserConversationsStatusController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 
 Route::middleware(['auth', 'verified'])->group(function () {

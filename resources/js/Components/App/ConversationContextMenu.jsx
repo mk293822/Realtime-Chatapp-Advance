@@ -29,7 +29,6 @@ const ConversationContextMenu = ({
         if (conversation) {
             setPinned(conversation.pin);
             setArchived(conversation.archived);
-            setBlocked(conversation.block);
             setMuted(conversation.mute);
         }
     }, [conversation]);
