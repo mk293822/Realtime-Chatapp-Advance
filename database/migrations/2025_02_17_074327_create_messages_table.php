@@ -23,6 +23,7 @@ return new class extends Migration
             $table->boolean('is_seen')->default(false);
             $table->boolean('is_saved')->default(false);
             $table->foreignId('saved_by')->nullable()->constrained('users');
+            $table->timestamp("last_send_date")->nullable();
             $table->timestamps();
         });
 

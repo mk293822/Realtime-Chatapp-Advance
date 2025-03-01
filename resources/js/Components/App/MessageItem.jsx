@@ -10,8 +10,6 @@ const MessageItem = ({ message, attachmentClick }) => {
     const currentUser = usePage().props.auth.user;
     const { emit } = useEventBus();
 
-    const date = formatMessageDate(message.created_at);
-
     const handleContextMenu = (e) => {
         e.preventDefault();
         const { pageX, pageY } = e;
@@ -33,7 +31,6 @@ const MessageItem = ({ message, attachmentClick }) => {
                 {message.sender_id !== currentUser.id && message.group_id
                     ? message.sender.name
                     : ""}
-                <time className="text-xs opacity-50 ml-2">{date}</time>
             </div>
 
             <div

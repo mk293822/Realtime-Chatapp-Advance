@@ -57,6 +57,17 @@ class MessageController extends Controller
 
         $message = Message::create($data);
 
+        $pre_message = Message::where('created_at', "<", $message->created_at)->latest()->first();
+
+        if ($pre_message) {
+            $diffInMilliseconds = $pre_message->created_at->diffInMilliseconds($message->created_at);
+            if ($diffInMilliseconds > 900000) {
+                $message->last_send_date = $message->created_at;
+                $message->save();
+            }
+        }
+
+
         $files = $data['attachments'] ?? [];
 
         if ($files) {

@@ -28,6 +28,7 @@ class MessageResource extends JsonResource
             "is_saved" => $this->is_saved,
             'saved_by' => $this->saved_by,
             "is_seen" => $this->is_seen,
+            "last_send_date" => $this->last_send_date,
         ];
     }
 }

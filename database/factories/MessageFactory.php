@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Conversation;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Carbon;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Message>
@@ -16,11 +18,8 @@ class MessageFactory extends Factory
      */
     public function definition(): array
     {
-
-
         return [
-            'message' => $this->faker->realText(100),
-            'created_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
+            //
         ];
     }
 }

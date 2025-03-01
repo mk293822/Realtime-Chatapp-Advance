@@ -25,11 +25,10 @@ export function formatMessageDate(date) {
     const now = new Date();
     const diffDays = Math.floor((now - input_date) / (1000 * 86400));
 
-    if (diffDays === 1) return "Yesterday";
-
+    if (diffDays === 1) return `Yesterday : ${input_date.toLocaleTimeString([], { hour: "numeric", minute: "numeric" })}`;
     if (diffDays > 1) return input_date.toLocaleDateString();
 
-    return input_date.toLocaleTimeString();
+    return input_date.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric' });
 }
 
 export function debounce(func, delay) {

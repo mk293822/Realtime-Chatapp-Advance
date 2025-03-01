@@ -3,12 +3,12 @@ import ConversationHeader from "@/Components/App/ConversationHeader";
 import MessageInputsBar from "@/Components/App/MessageInputsBar";
 import MessageItem from "@/Components/App/MessageItem";
 import { useEventBus } from "@/EventBus";
-import { debounce } from "@/helper";
+import { debounce, formatMessageDate } from "@/helper";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import ChatLayout from "@/Layouts/ChatLayout";
 import { ChatBubbleLeftEllipsisIcon } from "@heroicons/react/20/solid";
 import axios from "axios";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 function Dashboard({ selected_conversation = null, messages = null }) {
     const { on } = useEventBus();
@@ -145,7 +145,6 @@ function Dashboard({ selected_conversation = null, messages = null }) {
             </div>
         );
     }
-
     return (
         <>
             {messages && (
@@ -163,14 +162,22 @@ function Dashboard({ selected_conversation = null, messages = null }) {
                             </div>
                         )}
                         {localMessages.length > 0 && (
-                            <div className="flex-1 flex flex-col">
+                            <div className="flex-1 flex flex-col gap-2">
                                 <div ref={loadMoreIntersect}></div>
                                 {localMessages.map((message, index) => (
-                                    <MessageItem
-                                        key={index}
-                                        message={message}
-                                        attachmentClick={onAttachmentClick}
-                                    />
+                                    <React.Fragment key={index}>
+                                        {message.last_send_date && (
+                                            <time className="text-xs opacity-50 text-center ml-2">
+                                                {formatMessageDate(
+                                                    message.last_send_date
+                                                )}
+                                            </time>
+                                        )}
+                                        <MessageItem
+                                            message={message}
+                                            attachmentClick={onAttachmentClick}
+                                        />
+                                    </React.Fragment>
                                 ))}
                             </div>
                         )}

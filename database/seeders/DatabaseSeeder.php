@@ -2,124 +2,160 @@
 
 namespace Database\Seeders;
 
-use App\Models\Conversation;
-use App\Models\Friends;
-use App\Models\Group;
-use App\Models\GroupUsers;
-use App\Models\Message;
-use App\Models\User;
-use App\Models\UserConversationsStatus;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\{Conversation, Friends, Group, GroupUsers, Message, User, UserConversationsStatus};
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        User::factory(11)->create();
+        // Create Users
+        $this->seedUsers();
 
+        // Create Conversations & Messages
+        $this->seedConversationsAndMessages();
+
+        // Create Groups & Group Messages
+        $this->seedGroupsAndMessages();
+
+        // Update last_message_id in Conversations & Groups
+        $this->updateLastMessages();
+
+        // Update User Avatars & Statuses
+        $this->updateUserDetails();
+    }
+
+    private function seedUsers(): void
+    {
+        User::factory(11)->create();
         User::factory()->create([
             'name' => "admin",
             "email" => "admin@gmail.com",
             "password" => Hash::make("password"),
         ]);
+    }
 
+    private function seedConversationsAndMessages(): void
+    {
         $con = 1;
+
+
         for ($i = 1; $i < 13; $i++) {
             for ($j = $i + 1; $j < 13; $j++) {
-
                 $accept = fake()->boolean(70);
                 $pending = fake()->boolean(70);
-                Conversation::factory()->create([
+
+                // Create Conversation
+                $conversation = Conversation::factory()->create([
                     'id' => $con,
                     'user_id1' => $i,
                     'user_id2' => $j,
                     'accept' => $accept,
-                    'pending' => !$accept &&  $pending,
-                    'reject' => !$accept && !$pending ? true : false,
+                    'pending' => !$accept && $pending,
+                    'reject' => !$accept && !$pending,
                     'status_at' => now(),
                     'request_by' => $i,
                     'status_by' => $j,
                 ]);
-                Message::factory(5)->create([
-                    'sender_id' => $i,
-                    'receiver_id' => $j,
-                    'conversation_id' => $con,
-                    'group_id' => null,
-                ]);
-                Message::factory(5)->create([
-                    'sender_id' => $j,
-                    'receiver_id' => $i,
-                    'conversation_id' => $con,
-                    'group_id' => null,
-                ]);
 
+
+                for ($k = 0; $k < 5; $k++) {
+
+                    Message::factory()->create([
+                        'sender_id' => $i,
+                        'receiver_id' => $j,
+                        'conversation_id' => $con,
+                        'group_id' => null,
+                        'message' => fake()->realText(100),
+                        'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
+                    ]);
+
+                    Message::factory()->create([
+                        'sender_id' => $j,
+                        'receiver_id' => $i,
+                        'conversation_id' => $con,
+                        'group_id' => null,
+                        'message' => fake()->realText(100),
+                        'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
+                    ]);
+                }
 
                 $con++;
             }
         }
+    }
 
-        $conversations = Conversation::all();
-        foreach ($conversations as $conversation) {
-            $last_message_id = Message::where("conversation_id", $conversation->id)->latest()->first()->id;
-
-            $conversation->update([
-                'last_message_id' => $last_message_id,
-            ]);
-        }
-
-
+    private function seedGroupsAndMessages(): void
+    {
         $gro = 1;
+
         for ($i = 1; $i < 13; $i++) {
-            Group::factory()->create([
+            // Create Group
+            $group = Group::factory()->create([
                 'id' => $gro,
                 'owner_id' => $i,
             ]);
 
             for ($j = 1; $j < 13; $j++) {
-
                 $accept = fake()->boolean(70);
                 $pending = fake()->boolean(70);
+
+                // Add User to Group
                 GroupUsers::factory()->create([
                     'group_id' => $gro,
                     'user_id' => $j,
                     'accept' => $accept,
                     'pending' => !$accept && $pending,
-                    'reject' => !$accept && !$pending ? true : false,
+                    'reject' => !$accept && !$pending,
                     'status_at' => now(),
                 ]);
-                Message::factory(10)->create([
-                    'sender_id' => $j,
-                    'receiver_id' => null,
-                    'conversation_id' => null,
-                    'group_id' => $gro,
-                ]);
+
+
+                for ($k = 0; $k < 10; $k++) {
+
+                    Message::factory()->create([
+                        'sender_id' => $j,
+                        'receiver_id' => null,
+                        'conversation_id' => null,
+                        'group_id' => $gro,
+                        'message' => fake()->realText(100),
+                        'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
+                    ]);
+                }
             }
 
             $gro++;
         }
+    }
 
-        $groups = Group::all();
-        foreach ($groups as $group) {
+    private function updateLastMessages(): void
+    {
+        Conversation::all()->each(function ($conversation) {
+            $last_message = Message::where("conversation_id", $conversation->id)->latest()->first();
+            if ($last_message) {
+                $conversation->update(['last_message_id' => $last_message->id]);
+            }
+        });
 
-            $last_message_id = Message::where("group_id", $group->id)->latest()->first()->id;
+        Group::all()->each(function ($group) {
+            $last_message = Message::where("group_id", $group->id)->latest()->first();
+            if ($last_message) {
+                $group->update(['last_message_id' => $last_message->id]);
+            }
+        });
+    }
 
-            $group->update([
-                'last_message_id' => $last_message_id,
-            ]);
-        }
-
-        $users = User::all();
-        foreach ($users as $user) {
+    private function updateUserDetails(): void
+    {
+        User::all()->each(function ($user) {
             $user->update([
                 'avatar' => "https://i.pravatar.cc/150?u=" . $user->id,
             ]);
 
-            $user->groups()->get()->each(function ($group) use ($user) {
+            // User Group Statuses
+            $user->groups()->each(function ($group) use ($user) {
                 UserConversationsStatus::factory()->create([
                     'user_id' => $user->id,
                     'conversation_id' => null,
@@ -130,7 +166,8 @@ class DatabaseSeeder extends Seeder
                 ]);
             });
 
-            Conversation::forUsers($user->id)->get()->each(function ($conversation) use ($user) {
+            // User Conversation Statuses
+            Conversation::forUsers($user->id)->each(function ($conversation) use ($user) {
                 UserConversationsStatus::factory()->create([
                     'user_id' => $user->id,
                     'conversation_id' => $conversation->id,
@@ -140,6 +177,6 @@ class DatabaseSeeder extends Seeder
                     'mute' => fake()->boolean(10),
                 ]);
             });
-        }
+        });
     }
 }
