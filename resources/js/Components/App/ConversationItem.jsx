@@ -21,7 +21,13 @@ const ConversationItem = ({
 
     useEffect(() => {
         const offUserOffline = on("offline.user", (user) => {
-            if (user.id === conversation.id) setOfflineDate(user.active);
+            if (
+                conversation &&
+                conversation.is_conversation &&
+                user.id === conversation.id
+            ) {
+                setOfflineDate(user.active);
+            }
             return;
         });
 
@@ -61,7 +67,7 @@ const ConversationItem = ({
             preserveState
             className={
                 `conversation-item px-2 transition-all flex items-center gap-2 p-2 cursor-pointer border-1 hover:bg-black/30 ${
-                    conversation.block ? " opacity-50 " : ""
+                    blocked ? " opacity-50 " : ""
                 }` + classes
             }
             onContextMenu={(e) => handleContextMenu(e, conversation)}
@@ -81,20 +87,25 @@ const ConversationItem = ({
                     <h3 className="text-sm font-semibold overflow-hidden text-nowrap text-ellipsis">
                         {conversation.name}
                     </h3>
-                    {offlineDate && !online && (
+                    {!blocked && offlineDate && !online && (
                         <span className="text-nowrap">
                             {formatActiveDate(offlineDate)}
                         </span>
                     )}
                 </div>
                 <div className="flex items-center justify-between">
-                    {conversation.last_message && (
-                        <p className="text-xs text-gray-500 text-nowrap overflow-hidden text-ellipsis">
+                    {!blocked && conversation.last_message && (
+                        <p className="text-xs text-gray-500 max-w-[95%] text-nowrap overflow-hidden text-ellipsis">
                             {conversation.last_message}
                         </p>
                     )}
-                    {conversation.pin && (
-                        <MapPinIcon className="size-5 text-blue-600" />
+                    {!blocked && conversation.pin && (
+                        <MapPinIcon className="w-[13px] text-blue-600" />
+                    )}
+                    {blocked && (
+                        <p className="text-md text-gray-500 text-nowrap">
+                            This user is Blocked
+                        </p>
                     )}
                 </div>
             </div>

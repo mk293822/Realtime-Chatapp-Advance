@@ -1,2 +1,2 @@
-SELECT * FROM  `conversations`;
+SELECT * FROM  `users`;
 -- SHOW tables;

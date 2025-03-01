@@ -19,11 +19,15 @@ class MessageResource extends JsonResource
             'id' => $this->id,
             'message' => $this->message,
             'group_id' => $this->group_id,
+            'conversation_id' => $this->conversation_id,
             'sender_id' => $this->sender_id,
             'sender' => new UserResource($this->sender),
             'receiver_id' => $this->receiver_id,
             'attachments' => AttachmentResource::collection($this->attachments),
             'created_at' => $this->created_at . " UTC",
+            "is_saved" => $this->is_saved,
+            'saved_by' => $this->saved_by,
+            "is_seen" => $this->is_seen,
         ];
     }
 }

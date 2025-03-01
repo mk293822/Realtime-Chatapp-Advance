@@ -101,7 +101,7 @@ class MessageController extends Controller
     public function destroy(Message $message)
 
     {
-        if ($message->sender_id !== auth()->id()) {
+        if ($message->sender_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
@@ -165,10 +165,18 @@ class MessageController extends Controller
     public function save(Message $message)
     {
         $message->is_saved = !$message->is_saved;
-        $message->saved_by = auth()->id();
+        $message->saved_by = Auth::id();
         $message->save();
 
         $message->refresh();
         return response()->json(["is_saved" => $message->is_saved === 1 ? true : false]);
+    }
+
+    public function savedMessages()
+    {
+        $user_id = Auth::id();
+        $messages = Message::where("is_saved", true)->where("saved_by", $user_id)->get();
+
+        return response()->json(["messages" => MessageResource::collection($messages)]);
     }
 }

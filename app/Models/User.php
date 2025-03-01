@@ -46,13 +46,6 @@ class User extends Authenticatable
         return $this->belongsToMany(Group::class, 'group_users', 'user_id', 'group_id');
     }
 
-    public function conversations()
-    {
-        return Conversation::where(function ($query) {
-            $query->where('user_id1', $this->id)
-                ->orWhere('user_id2', $this->id);
-        });
-    }
 
 
     /**
@@ -82,6 +75,7 @@ class User extends Authenticatable
             "conversations.reject as reject",
             "conversations.pending as pending",
             "conversations.block as block",
+            "conversations.blocked_by as blocked_by",
             'conversations.status_at as status_at',
             "conversations.request_by as request_by",
             "conversations.status_by as status_by",
@@ -120,6 +114,7 @@ class User extends Authenticatable
             'users.name',
             'users.avatar',
             'conversations.id as conversation_id',
+            "conversations.block as block",
             "user_conversations_statuses.pin as pin",
             "user_conversations_statuses.archived as archived",
             "user_conversations_statuses.mute as mute",
@@ -150,6 +145,7 @@ class User extends Authenticatable
             'pin'      => $user->pin == 1 ?? false,
             'archived' => $user->archived == 1 ?? false,
             'mute'     => $user->mute == 1 ?? false,
+            "block" => $user->block == 1 ?? false,
         ];
     }
 
@@ -180,6 +176,7 @@ class User extends Authenticatable
             'archived'          => $this->archived == 1 ?? false,
             'mute'              => $this->mute == 1 ?? false,
             'block'              => $this->block == 1 ?? false,
+            "blocked_by"         => $this->blocked_by,
             'is_conversation'   => true,
             'is_group'          => false,
         ];

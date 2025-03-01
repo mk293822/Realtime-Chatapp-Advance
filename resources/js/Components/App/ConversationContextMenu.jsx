@@ -9,6 +9,7 @@ import {
     NoSymbolIcon,
     TrashIcon,
 } from "@heroicons/react/20/solid";
+import { usePage } from "@inertiajs/react";
 import React, { useEffect, useRef, useState } from "react";
 
 const ConversationContextMenu = ({
@@ -19,6 +20,7 @@ const ConversationContextMenu = ({
     conversation = null,
     handleStatus = () => {},
 }) => {
+    const user_id = usePage().props.auth.user.id;
     const contentRef = useRef(null);
     const { emit } = useEventBus();
 
@@ -100,16 +102,33 @@ const ConversationContextMenu = ({
                             </span>
                             Delete
                         </button>
-                        {conversation && !conversation.is_group && (
-                            <button
-                                onClick={handleBlock}
-                                className="flex w-full items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-400 dark:hover:bg-gray-700 cursor-pointer transition-all"
-                            >
-                                <span className="mr-2">
-                                    <NoSymbolIcon className="size-4" />
-                                </span>
-                                {blocked ? "Unblock" : "Block"}
-                            </button>
+                        {conversation && conversation.block ? (
+                            conversation.blocked_by === user_id ? (
+                                <button
+                                    onClick={handleBlock}
+                                    className="flex w-full items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-400 dark:hover:bg-gray-700 cursor-pointer transition-all"
+                                >
+                                    <span className="mr-2">
+                                        <NoSymbolIcon className="size-4" />
+                                    </span>
+                                    {blocked ? "Unblock" : "Block"}
+                                </button>
+                            ) : (
+                                ""
+                            )
+                        ) : (
+                            conversation &&
+                            !conversation.is_group && (
+                                <button
+                                    onClick={handleBlock}
+                                    className="flex w-full items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-400 dark:hover:bg-gray-700 cursor-pointer transition-all"
+                                >
+                                    <span className="mr-2">
+                                        <NoSymbolIcon className="size-4" />
+                                    </span>
+                                    {blocked ? "Unblock" : "Block"}
+                                </button>
+                            )
                         )}
                         <button
                             onClick={() => handleStatus("mute")}

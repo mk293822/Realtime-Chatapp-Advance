@@ -119,7 +119,7 @@ class DatabaseSeeder extends Seeder
                 'avatar' => "https://i.pravatar.cc/150?u=" . $user->id,
             ]);
 
-            $user->groups()->get()->each(function ($group) use ($user, $accept, $pending) {
+            $user->groups()->get()->each(function ($group) use ($user) {
                 UserConversationsStatus::factory()->create([
                     'user_id' => $user->id,
                     'conversation_id' => null,
@@ -130,7 +130,7 @@ class DatabaseSeeder extends Seeder
                 ]);
             });
 
-            $user->conversations()->get()->each(function ($conversation) use ($user, $accept, $pending) {
+            Conversation::forUsers($user->id)->get()->each(function ($conversation) use ($user) {
                 UserConversationsStatus::factory()->create([
                     'user_id' => $user->id,
                     'conversation_id' => $conversation->id,

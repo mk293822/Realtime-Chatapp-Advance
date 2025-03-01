@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ConversationStatusSockets;
 use App\Models\Conversation;
 use App\Models\Group;
 use Illuminate\Http\Request;
@@ -26,12 +27,28 @@ class ConversationController extends Controller
     {
         $conversation_id = $request->input("conversation_id");
         $user_id = $request->user()->id;
+        $status = "block";
 
         $update_conversation = Conversation::where("id", $conversation_id)->first();
+
+        if ($update_conversation->block) {
+            if ($update_conversation->blocked_by === $user_id) {
+                $update_conversation->block = false;
+                $update_conversation->blocked_by = null;
+                $update_conversation->save();
+                ConversationStatusSockets::dispatch($update_conversation, $status);
+
+                return response()->json(["conversation" => $update_conversation]);
+            } else {
+                abort(403, 'Access Denied');
+            }
+        }
 
         $update_conversation->blocked_by = $user_id;
         $update_conversation->block = !$update_conversation->block;
         $update_conversation->save();
+
+        ConversationStatusSockets::dispatch($update_conversation, $status);
 
         return response()->json(["conversation" => $update_conversation]);
     }

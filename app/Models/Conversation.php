@@ -28,6 +28,11 @@ class Conversation extends Model
         });
     }
 
+    public function scopeForUsers($query, $user_id)
+    {
+        return $query->where('user_id1', $user_id)->orWhere("user_id2", $user_id);
+    }
+
 
     public function user1()
     {

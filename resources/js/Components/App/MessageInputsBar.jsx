@@ -123,9 +123,8 @@ const MessageInputsBar = ({ conversation }) => {
         const offConversationBlock = on(
             "conversation.block",
             (block_conversation) => {
-                console.log(block_conversation);
-                if (block_conversation.id == conversation.id) {
-                    setBlock(!block);
+                if (block_conversation.id == conversation.conversation_id) {
+                    setBlock(block_conversation.block);
                 }
             }
         );

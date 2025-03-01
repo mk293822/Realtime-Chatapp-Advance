@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/message', [MessageController::class, 'store'])->name('message.store');
     Route::post('/message/{message}', [MessageController::class, 'save'])->name('message.save');
     Route::get('/message/{message}', [MessageController::class, 'loadMoreMessage'])->name('message.loadMoreMessage');
+    Route::get('/message', [MessageController::class, 'savedMessages'])->name('message.saved_messages');
 
     Route::post('/conversation', [ConversationController::class, 'block'])->name('conversation.block');
 });

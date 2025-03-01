@@ -51,7 +51,6 @@ const ChatLayout = ({ children }) => {
         axios
             .post(route("user.lastActiveTime", user))
             .then((res) => {
-                console.log(res.data);
                 emit("offline.user", res.data.user);
             })
             .catch((error) => {
@@ -105,7 +104,11 @@ const ChatLayout = ({ children }) => {
                     !con.is_group &&
                     con.conversation_id === block_conversation.id
                 ) {
-                    return { ...con, block: block_conversation.block };
+                    return {
+                        ...con,
+                        block: block_conversation.block,
+                        blocked_by: block_conversation.blocked_by,
+                    };
                 }
                 return con;
             })

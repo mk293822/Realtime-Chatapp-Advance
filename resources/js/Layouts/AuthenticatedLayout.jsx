@@ -28,6 +28,7 @@ export default function AuthenticatedLayout({ header, children }) {
         };
     }, [on]);
 
+    // message sending socket
     useEffect(() => {
         conversations.forEach((conversation) => {
             let channel = `message.group.${conversation.id}`;
@@ -59,6 +60,32 @@ export default function AuthenticatedLayout({ header, children }) {
                 }
 
                 Echo.leave(channel);
+            });
+        };
+    }, [conversations]);
+
+    // conversation block socket
+
+    useEffect(() => {
+        conversations.forEach((conversation) => {
+            if (conversation.is_conversation) {
+                let channel = `conversation.${conversation.conversation_id}`;
+
+                Echo.private(channel)
+                    .error((err) => console.log(err))
+                    .listen("ConversationStatusSockets", (e) => {
+                        if (e.status === "block")
+                            emit("conversation.block", e.conversation);
+                    });
+            }
+        });
+
+        return () => {
+            conversations.forEach((conversation) => {
+                if (conversation.is_conversation) {
+                    let channel = `conversation.${conversation.conversation_id}`;
+                    Echo.leave(channel);
+                }
             });
         };
     }, [conversations]);

@@ -19,6 +19,7 @@ import { useEventBus } from "@/EventBus";
 
 export default function SideBar({ mustVerifyEmail, status, conversations }) {
     const page = usePage().props;
+    const user = page.auth.user;
     const { emit } = useEventBus();
 
     const [enabled, setEnabled] = useState(page.auth.user.dark_mode);
@@ -63,7 +64,16 @@ export default function SideBar({ mustVerifyEmail, status, conversations }) {
         }
     }, [enabled]);
 
-    const user = page.auth.user;
+    const handleSavedMessages = () => {
+        axios
+            .get(route("message.saved_messages"))
+            .then((res) => {
+                emit("messages.saved_messages", res.data.messages);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    };
 
     return (
         <div className="w-72 menu h-screen bg-white dark:bg-gray-900 rounded-lg shadow p-4">
@@ -113,7 +123,10 @@ export default function SideBar({ mustVerifyEmail, status, conversations }) {
                             Settings
                         </span>
                     </button>
-                    <button className="flex w-full items-center px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer">
+                    <button
+                        onClick={handleSavedMessages}
+                        className="flex w-full items-center px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer"
+                    >
                         <BookmarkIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                         <span className="ml-3 text-sm text-gray-800 dark:text-gray-200">
                             Saved Messages
