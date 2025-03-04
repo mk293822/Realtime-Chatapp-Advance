@@ -314,6 +314,7 @@ const ChatLayout = ({ children }) => {
                                 ></label>
                                 {/* Sidebar content here */}
                                 <SideBar
+                                    sidebar_button={sidebar_button}
                                     status={edit_status}
                                     mustVerifyEmail={mustVerifyEmail}
                                     conversations={localConversations}

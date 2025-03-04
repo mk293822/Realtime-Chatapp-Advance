@@ -17,7 +17,7 @@ class AttachmentResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            "message_id" => $this->message_id,
+            "message_id" => $this?->message_id,
             'name' => $this->name,
             'mime' => $this->mime,
             'size' => $this->size,

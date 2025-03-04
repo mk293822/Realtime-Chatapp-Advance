@@ -25,7 +25,7 @@ const MessageInputsBar = ({ conversation }) => {
     const [newMessage, setNewMessage] = useState("");
     const [chosenFiles, setChosenFiles] = useState([]);
     const [block, setBlock] = useState(false);
-    const { on } = useEventBus();
+    const { on, emit } = useEventBus();
 
     useEffect(() => {
         setBlock(conversation.block);
@@ -56,6 +56,8 @@ const MessageInputsBar = ({ conversation }) => {
         } else if (conversation.is_conversation) {
             formData.append("receiver_id", conversation.id);
             formData.append("conversation_id", conversation.conversation_id);
+        } else if (conversation.is_save_conversation) {
+            formData.append("save_conversation_id", conversation.id);
         }
 
         setMessageSending(true);
@@ -63,6 +65,7 @@ const MessageInputsBar = ({ conversation }) => {
         axios
             .post(route("message.store"), formData, {})
             .then((res) => {
+                emit("newMessage.send", res.data.message);
                 setMessageSending(false);
                 setNewMessage("");
                 setChosenFiles([]);
@@ -85,6 +88,8 @@ const MessageInputsBar = ({ conversation }) => {
         } else if (conversation.is_conversation) {
             data["receiver_id"] = conversation.id;
             data["conversation_id"] = conversation.conversation_id;
+        } else if (conversation.is_save_conversation) {
+            data["save_conversation_id"] = conversation.id;
         }
 
         setMessageSending(true);
@@ -93,6 +98,7 @@ const MessageInputsBar = ({ conversation }) => {
             .post(route("message.store"), data, {})
             .then((res) => {
                 setMessageSending(false);
+                emit("newMessage.send", res.data.message);
             })
             .catch((err) => {
                 console.log(err);

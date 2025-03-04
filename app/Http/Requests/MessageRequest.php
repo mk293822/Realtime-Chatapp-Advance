@@ -23,11 +23,12 @@ class MessageRequest extends FormRequest
     {
         return [
             "message" => 'nullable|string',
-            "group_id" => 'required_without:receiver_id|nullable|exists:groups,id',
-            "receiver_id" => 'required_without:group_id|nullable|exists:users,id',
-            "conversation_id" => 'required_without:group_id|nullable|exists:conversations,id',
+            "group_id" => 'nullable|exists:groups,id',
+            "receiver_id" => 'nullable|exists:users,id',
+            "conversation_id" => 'nullable|exists:conversations,id',
             "attachments" => "nullable|array|max:10",
-            "attachments.*" => 'file|max:1024000'
+            "attachments.*" => 'file|max:1024000',
+            'save_conversation_id' => 'nullable|exists:message_saved_conversations,id'
         ];
     }
 }

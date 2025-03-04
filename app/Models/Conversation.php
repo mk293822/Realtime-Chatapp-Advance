@@ -58,12 +58,11 @@ class Conversation extends Model
         $groups = Group::getExceptUser($exceptUser);
 
 
-        $conversations = $users->map(function (User $user) {
+        $conversations = $users->map(function ($user) {
             return $user->toConversationArray();
-        })->concat($groups->map(function (Group $group) {
+        })->concat($groups->map(function ($group) {
             return $group->toConversationArray();
         }));
-
 
         return $conversations;
     }

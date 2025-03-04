@@ -69,8 +69,8 @@ class User extends Authenticatable
             "users.*",
             "messages.message as last_message",
             "messages.created_at as last_message_date",
-            "conversations.id as conversation_id",
             "conversations.last_message_id as last_message_id",
+            "conversations.id as conversation_id",
             "conversations.accept as accept",
             "conversations.reject as reject",
             "conversations.pending as pending",
@@ -92,14 +92,15 @@ class User extends Authenticatable
                             ->where("conversations.user_id2", "=", $user_id);
                     });
             })
-            ->join("user_conversations_statuses", function ($join) use ($user_id) {
+            ->leftJoin("user_conversations_statuses", function ($join) use ($user_id) {
                 $join->on("user_conversations_statuses.conversation_id", "=", "conversations.id")
                     ->where("user_conversations_statuses.user_id", "=", $user_id);
             })
             ->leftJoin("messages", "messages.id", "=", "conversations.last_message_id")
             ->orderBy('users.name')
             ->orderBy("users.created_at")
-            ->orderBy("user_conversations_statuses.pin", "desc");;
+            ->orderBy("user_conversations_statuses.pin", "desc");
+
 
         return $query->get();
     }
@@ -127,7 +128,7 @@ class User extends Authenticatable
                             ->where("conversations.user_id2", "=", $self_id);
                     });
             })
-            ->join("user_conversations_statuses", function ($join) use ($self_id) {
+            ->leftJoin("user_conversations_statuses", function ($join) use ($self_id) {
                 $join->on("user_conversations_statuses.conversation_id", "=", "conversations.id")
                     ->where("user_conversations_statuses.user_id", "=", $self_id);
             })
@@ -142,6 +143,7 @@ class User extends Authenticatable
             "conversation_id" => $user->conversation_id,
             'is_conversation' => true,
             "is_group" => false,
+            "is_save_conversation" => false,
             'pin'      => $user->pin == 1 ?? false,
             'archived' => $user->archived == 1 ?? false,
             'mute'     => $user->mute == 1 ?? false,
@@ -149,8 +151,29 @@ class User extends Authenticatable
         ];
     }
 
+    public function message_save_conversation()
+    {
+        return $this->hasOne(MessageSavedConversation::class, "saved_by");
+    }
+
     public function toConversationArray()
     {
+
+        $deleted_message = DeletedMessage::where("user_id", Auth::id())->where("message_id", $this->last_message_id)->first();
+
+        $last_message = null;
+
+        if ($deleted_message) {
+            $deleted_message_ids = DeletedMessage::where("user_id", Auth::id())->pluck("message_id")->toArray();
+
+            $last_message = Message::where("conversation_id", $this->conversation_id)
+                ->where("id", "!=", $this->last_message_id)
+                ->whereNotIn("id", $deleted_message_ids)
+                ->latest()
+                ->limit(1)
+                ->first();
+        }
+
         return [
             'id'                => $this->id,
             'name'              => $this->name,
@@ -160,8 +183,9 @@ class User extends Authenticatable
             'gender'            => $this->gender,
             'avatar'            => $this->avatar,
             'active'            => $this->active . " UTC",
-            'last_message'      => $this->last_message,
-            'last_message_date' => $this->last_message_date . " UTC",
+            'last_message'      => $deleted_message ? $last_message->message : $this->last_message,
+            'last_message_date' => $deleted_message ? $last_message->created_at : $this->last_message_date . " UTC",
+            'last_message_id'   => $deleted_message ? $last_message->id : $this->last_message_id,
             'conversation_id'   => $this->conversation_id,
             'request_by'        => $this->request_by,
             'status_by'         => $this->status_by,
@@ -169,7 +193,6 @@ class User extends Authenticatable
             'reject'            => $this->reject == 1 ?? false,
             'pending'           => $this->pending == 1 ?? false,
             'status_at'         => $this->status_at . " UTC",
-            'last_message_id'   => $this->last_message_id,
             'user_id'           => $this->user_id,
             'group_id'          => $this->group_id,
             'pin'               => $this->pin == 1 ?? false,
@@ -178,6 +201,7 @@ class User extends Authenticatable
             'block'              => $this->block == 1 ?? false,
             "blocked_by"         => $this->blocked_by,
             'is_conversation'   => true,
+            "is_save_conversation" => false,
             'is_group'          => false,
         ];
     }

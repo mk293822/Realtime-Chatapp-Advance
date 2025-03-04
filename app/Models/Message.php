@@ -24,7 +24,6 @@ class Message extends Model
     {
         return $this->hasMany(MessageAttachment::class, 'message_id');
     }
-
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
@@ -32,5 +31,15 @@ class Message extends Model
     public function receiver()
     {
         return $this->belongsTo(User::class, 'receiver_id');
+    }
+
+    public function group_users()
+    {
+        return $this->hasMany(GroupUsers::class, "group_id", "group_id");
+    }
+
+    public function saved_message()
+    {
+        return $this->hasMany(SavedMessages::class, "message_id");
     }
 }

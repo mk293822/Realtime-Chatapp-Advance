@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Conversation;
+use App\Models\DeletedMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;

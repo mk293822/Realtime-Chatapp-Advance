@@ -19,6 +19,7 @@ function Dashboard({ selected_conversation = null, messages = null }) {
     const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
     const [noMoreMessages, setNoMoreMessages] = useState(false);
     const [scrollFromBottom, setScrollFromBottom] = useState();
+    const [isSavedConversation, setIsSavedConversation] = useState(false);
 
     const loadMoreMessages = useCallback(
         debounce(() => {
@@ -28,7 +29,9 @@ function Dashboard({ selected_conversation = null, messages = null }) {
 
             if (firstMessage) {
                 axios
-                    .get(route("message.loadMoreMessage", firstMessage.id))
+                    .get(route("message.loadMoreMessage", firstMessage.id), {
+                        params: { is_save_conversation: isSavedConversation },
+                    })
                     .then(({ data }) => {
                         if (data.messages === "noMoreMessages") {
                             setNoMoreMessages(true);
@@ -101,7 +104,9 @@ function Dashboard({ selected_conversation = null, messages = null }) {
     };
 
     const newMessageSend = (message) => {
-        setLocalMessages((pre) => [...pre, message]);
+        setLocalMessages((pre) =>
+            pre.some((mes) => mes.id === message.id) ? pre : [...pre, message]
+        );
         toBottom();
     };
 
@@ -115,10 +120,22 @@ function Dashboard({ selected_conversation = null, messages = null }) {
     };
 
     useEffect(() => {
+        selected_conversation &&
+            selected_conversation.is_save_conversation &&
+            setIsSavedConversation(true);
+    }, []);
+
+    useEffect(() => {
         toBottom();
 
         const offMessageSend = on("newMessage.send", newMessageSend);
         const offMessageDelete = on("newMessage.delete", messageDeleted);
+        const offMessageSaveConversation = on(
+            "message.save_conversation",
+            () => {
+                setIsSavedConversation(true);
+            }
+        );
 
         setScrollFromBottom(0);
         setNoMoreMessages(false);
@@ -126,8 +143,9 @@ function Dashboard({ selected_conversation = null, messages = null }) {
         return () => {
             offMessageSend();
             offMessageDelete();
+            offMessageSaveConversation();
         };
-    }, [selected_conversation]);
+    }, [selected_conversation, on]);
 
     useEffect(() => {
         setLocalMessages(messages ? messages.data.reverse() : []);
@@ -145,6 +163,7 @@ function Dashboard({ selected_conversation = null, messages = null }) {
             </div>
         );
     }
+
     return (
         <>
             {messages && (

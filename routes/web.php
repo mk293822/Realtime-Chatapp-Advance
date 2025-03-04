@@ -16,12 +16,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/private/{user}', [MessageController::class, 'conversation'])->name('message.conversation');
     Route::get('/group/{group}', [MessageController::class, 'group'])->name('message.group');
+    Route::get('/saved', [MessageController::class, 'message_saved_conversation'])->name('message.message_saved_conversation');
 
     Route::delete('/message/{message}', [MessageController::class, 'destroy'])->name('message.destroy');
+    Route::post('/message/user/{message}', [MessageController::class, 'deleted_for_user'])->name('message.deleted_for_user');
     Route::post('/message', [MessageController::class, 'store'])->name('message.store');
-    Route::post('/message/{message}', [MessageController::class, 'save'])->name('message.save');
+    Route::post('/message/save/{message}', [MessageController::class, 'save'])->name('message.save');
+    Route::post('/message/unsave/{message}', [MessageController::class, 'unsave'])->name('message.unsave');
     Route::get('/message/{message}', [MessageController::class, 'loadMoreMessage'])->name('message.loadMoreMessage');
-    Route::get('/message', [MessageController::class, 'savedMessages'])->name('message.saved_messages');
 
     Route::post('/conversation', [ConversationController::class, 'block'])->name('conversation.block');
 });

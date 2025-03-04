@@ -95,13 +95,15 @@ export default function AuthenticatedLayout({ header, children }) {
             <div className="h-screen overflow-hidden w-[100vw] bg-white text-gray-800 dark:text-gray-400 dark:bg-gray-900">
                 <main>{children}</main>
             </div>
-            <MessageOptionDropdown
-                close={() => setContextMenu(initialContextMenu)}
-                x={contextMenu.x}
-                y={contextMenu.y}
-                show={contextMenu.show}
-                message={message}
-            />
+            {message && (
+                <MessageOptionDropdown
+                    close={() => setContextMenu(initialContextMenu)}
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    show={contextMenu.show}
+                    message={message}
+                />
+            )}
         </>
     );
 }

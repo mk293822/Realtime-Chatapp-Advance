@@ -44,17 +44,13 @@ class DatabaseSeeder extends Seeder
 
         for ($i = 1; $i < 13; $i++) {
             for ($j = $i + 1; $j < 13; $j++) {
-                $accept = fake()->boolean(70);
-                $pending = fake()->boolean(70);
 
                 // Create Conversation
                 $conversation = Conversation::factory()->create([
                     'id' => $con,
                     'user_id1' => $i,
                     'user_id2' => $j,
-                    'accept' => $accept,
-                    'pending' => !$accept && $pending,
-                    'reject' => !$accept && !$pending,
+                    'accept' => true,
                     'status_at' => now(),
                     'request_by' => $i,
                     'status_by' => $j,

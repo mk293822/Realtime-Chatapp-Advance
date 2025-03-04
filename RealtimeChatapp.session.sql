@@ -1,2 +1,2 @@
-SELECT * FROM  `messages`;
+SELECT * FROM  `deleted_messages`;
 -- SHOW tables;

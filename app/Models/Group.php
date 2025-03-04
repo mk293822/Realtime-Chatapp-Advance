@@ -2,11 +2,9 @@
 
 namespace App\Models;
 
-use App\Enums\FriendStatusEnum;
 use App\Http\Resources\UserResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class Group extends Model
@@ -20,18 +18,6 @@ class Group extends Model
         'last_message_id'
     ];
 
-    public static function boot()
-    {
-        parent::boot();
-
-
-        static::saving(function ($model) {
-            $now = $now = Carbon::now("UTC");
-            if ($model->isDirty('status')) {
-                $model->status_at = $now->format('Y-m-d H:i:s');
-            }
-        });
-    }
 
     public function lastMessage()
     {
@@ -102,6 +88,7 @@ class Group extends Model
             'avatar' => $query->avatar,
             "owner" => (new UserResource($query->owner))->toArray(request()),
             "group_users" => UserResource::collection(collect($query->group_users->pluck('user')))->toArray(request()),
+            "is_save_conversation" => false,
             'is_conversation' => false,
             "is_group" => true,
             'pin'      => $query->pin == 1 ?? false,
@@ -112,15 +99,28 @@ class Group extends Model
 
     public function toConversationArray()
     {
+        $deleted_message = DeletedMessage::where("user_id", Auth::id())->where("message_id", $this->last_message_id)->first();
+        $last_message = null;
+        if ($deleted_message) {
+            $deleted_message_ids = DeletedMessage::where("user_id", Auth::id())->pluck("message_id")->toArray();
+
+            $last_message = Message::where("group_id", $this->id)
+                ->where("id", "!=", $this->last_message_id)
+                ->whereNotIn("id", $deleted_message_ids)
+                ->latest()->limit(1)->first();
+        }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'avatar' => $this->avatar,
             "owner" => (new UserResource($this->owner))->toArray(request()),
             "group_users" => UserResource::collection(collect($this->group_users->pluck('user')))->toArray(request()),
-            'last_message' => $this->last_message,
-            'last_message_date' => $this->last_message_date . " UTC",
+            'last_message'      => $deleted_message ? $last_message->message : $this->last_message,
+            'last_message_date' => $deleted_message ? $last_message->created_at : $this->last_message_date . " UTC",
+            'last_message_id'   => $deleted_message ? $last_message->id : $this->last_message_id,
             'is_conversation' => false,
+            "is_save_conversation" => false,
             "is_group" => true,
             'pin'      => $this->pin == 1 ?? false,
             'archived' => $this->archived == 1 ?? false,

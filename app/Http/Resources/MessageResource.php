@@ -25,10 +25,8 @@ class MessageResource extends JsonResource
             'receiver_id' => $this->receiver_id,
             'attachments' => AttachmentResource::collection($this->attachments),
             'created_at' => $this->created_at . " UTC",
-            "is_saved" => $this->is_saved,
-            'saved_by' => $this->saved_by,
-            "is_seen" => $this->is_seen,
             "last_send_date" => $this->last_send_date,
+            'is_saved' => $this->saved_message()->exists(),
         ];
     }
 }

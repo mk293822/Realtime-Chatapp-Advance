@@ -11,6 +11,7 @@ const ConversationItem = ({
     selectedConversation = null,
     online = null,
     handleContextMenu = () => {},
+    deleted_messages = [],
 }) => {
     let classes = "border-transparent";
     const blocked = conversation.block;

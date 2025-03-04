@@ -1,5 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, usePage } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import DeleteUserForm from "./Partials/DeleteUserForm";
 import UpdatePasswordForm from "./Partials/UpdatePasswordForm";
 import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm";
@@ -17,7 +17,12 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useEventBus } from "@/EventBus";
 
-export default function SideBar({ mustVerifyEmail, status, conversations }) {
+export default function SideBar({
+    mustVerifyEmail,
+    status,
+    conversations,
+    sidebar_button,
+}) {
     const page = usePage().props;
     const user = page.auth.user;
     const { emit } = useEventBus();
@@ -54,6 +59,11 @@ export default function SideBar({ mustVerifyEmail, status, conversations }) {
         }
     };
 
+    const handleSave = () => {
+        sidebar_button.checked = !sidebar_button.checked;
+        emit("message.save_conversation");
+    };
+
     useEffect(() => {
         if (enabled) {
             document.body.classList.add("dark");
@@ -64,17 +74,6 @@ export default function SideBar({ mustVerifyEmail, status, conversations }) {
         }
     }, [enabled]);
 
-    const handleSavedMessages = () => {
-        axios
-            .get(route("message.saved_messages"))
-            .then((res) => {
-                emit("messages.saved_messages", res.data.messages);
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-    };
-
     return (
         <div className="w-72 menu h-screen bg-white dark:bg-gray-900 rounded-lg shadow p-4">
             {/* User Profile */}
@@ -83,6 +82,7 @@ export default function SideBar({ mustVerifyEmail, status, conversations }) {
                 <ul className="mt-2 text-sm text-gray-700 dark:text-gray-300">
                     <li className="capitalize text-center">{user.name}</li>
                     <li>{user.email}</li>
+                    <li>{user.id}</li>
                 </ul>
             </div>
 
@@ -123,15 +123,16 @@ export default function SideBar({ mustVerifyEmail, status, conversations }) {
                             Settings
                         </span>
                     </button>
-                    <button
-                        onClick={handleSavedMessages}
+                    <Link
+                        href={route("message.message_saved_conversation")}
+                        onClick={handleSave}
                         className="flex w-full items-center px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer"
                     >
                         <BookmarkIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                         <span className="ml-3 text-sm text-gray-800 dark:text-gray-200">
                             Saved Messages
                         </span>
-                    </button>
+                    </Link>
                     <div className="flex items-center justify-between px-2 py-2">
                         <div className="flex items-center">
                             <MoonIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />

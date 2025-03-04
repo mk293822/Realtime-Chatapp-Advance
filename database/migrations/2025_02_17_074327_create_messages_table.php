@@ -18,12 +18,14 @@ return new class extends Migration
             $table->longText('message')->nullable();
             $table->foreignId('sender_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->foreignId('receiver_id')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->boolean('delete_for_sender')->default(false);
-            $table->boolean('delete_for_receiver')->default(false);
-            $table->boolean('is_seen')->default(false);
-            $table->boolean('is_saved')->default(false);
-            $table->foreignId('saved_by')->nullable()->constrained('users');
             $table->timestamp("last_send_date")->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create("deleted_messages", function (Blueprint $table) {
+            $table->id();
+            $table->foreignId("message_id")->constrained("messages")->cascadeOnDelete();
+            $table->foreignId("user_id")->constrained("users")->cascadeOnDelete();
             $table->timestamps();
         });
 
@@ -42,5 +44,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('messages');
+        Schema::dropIfExists('deleted_messages');
     }
 };
