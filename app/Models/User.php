@@ -105,6 +105,11 @@ class User extends Authenticatable
         return $query->get();
     }
 
+    public function deleted_messages()
+    {
+        return $this->hasMany(DeletedMessage::class, "user_id");
+    }
+
     public function toSelectedConversation()
     {
         $user_id = $this->id;

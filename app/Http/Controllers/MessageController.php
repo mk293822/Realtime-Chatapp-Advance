@@ -6,7 +6,6 @@ use App\Events\MessageSend;
 use App\Http\Requests\MessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\MessageSavedConversationResource;
-use App\Models\AttachmentsSavedConversation;
 use App\Models\Conversation;
 use App\Models\DeletedMessage;
 use App\Models\Group;
@@ -18,6 +17,7 @@ use App\Models\SavedMessages;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -177,7 +177,7 @@ class MessageController extends Controller
 
         $mes = null;
 
-        if ($is_save_conversation) {
+        if ($is_save_conversation === "true") {
             $saved_message = SavedMessages::where('message_id', $message_id)->first();
 
             $save_message_con_id = MessageSavedConversation::where("saved_by", $self_id)->first()->id;
@@ -239,10 +239,6 @@ class MessageController extends Controller
             $conversation = Conversation::where('last_message_id', $message->id)->first();
         }
 
-        $status = "delete";
-
-        $deleted_message = $message;
-        $lastMessage = null;
         $is_saved = $message->saved_message()->exists();
 
         if (!$is_saved) {
@@ -251,32 +247,99 @@ class MessageController extends Controller
             $this->destroy_for_saved_message($message);
         }
 
+
+        $status = "delete";
+
+        $deleted_message = $message;
+        $lastMessage = null;
+
+
         if ($group) {
-            $group = Group::find($group->id);
-            $lastMessage = $group->lastMessage;
+            $group->refresh();
+            $lastMessage = Message::find($group->last_message_id);
         }
 
         if ($conversation) {
-            $conversation = Conversation::find($conversation->id);
-            $lastMessage = $conversation->lastMessage;
+            $conversation->refresh();
+            $lastMessage = Message::find($conversation->last_message_id);
         }
 
         MessageSend::dispatch($deleted_message, $status, $lastMessage);
 
-        return response()->json(["deleted_message" => $deleted_message, "pre_message" => $lastMessage]);
+        $pre = $this->get_undeleted_pre_message($lastMessage);
+
+        return response()->json(["deleted_message" => $deleted_message, "pre_message" => $pre]);
+    }
+
+    public function deleted_for_user(Message $message, $user = null)
+    {
+        $user ??= Auth::user();
+        $all_users_deleted = false;
+
+        DeletedMessage::create([
+            "message_id" => $message->id,
+            "user_id" => $user->id,
+        ]);
+
+        $all_users_deleted = $this->is_deleted_for_all_users($message);
+        $is_saved = $message->saved_message()->exists();
+
+        if ($all_users_deleted && !$is_saved) {
+            return $this->destroy($message);
+        }
+
+        Log::info("message", [$all_users_deleted, $is_saved]);
+
+        if ($is_saved && $all_users_deleted) {
+            $pre_message = $this->update_the_pre_message($message);
+        } else {
+
+            $deleted_message_ids = $user->deleted_messages->pluck("message_id")->toArray();
+
+            $pre_message = Message::where(function ($query) use ($message) {
+                if ($message->conversation_id) {
+                    $query->where("conversation_id", $message->conversation_id);
+                } else {
+                    $query->where("group_id", $message->group_id);
+                }
+            })
+                ->where("id", "!=", $message->id)
+                ->whereNotIn("id",  $deleted_message_ids)
+                ->latest()
+                ->limit(1)
+                ->first();
+        }
+
+
+        return response()->json(["deleted_message" => $message, "pre_message" => $pre_message]);
+    }
+
+    protected function get_undeleted_pre_message($message)
+    {
+        $user = Auth::user();
+
+        $deleted_message_ids = $user->deleted_messages->pluck("message_id")->toArray();
+
+        $pre_message = Message::where(function ($query) use ($message) {
+            if ($message->group_id) {
+                $query->where("group_id", $message->group_id);
+            } else {
+                $query->where("conversation_id", $message->conversation_id);
+            }
+        })
+            ->whereNotIn("id", $deleted_message_ids)
+            ->where("id", "<", $message->id)
+            ->latest()
+            ->first();
+
+        return $pre_message;
     }
 
     protected function destroy_for_saved_message(Message $message)
     {
+        $this->update_the_pre_message($message);
+
         if ($message->group_id) {
-            $group_for_last = Group::where("last_message_id", $message->id)->first();
-            if ($group_for_last) {
-                $pre_message = Message::where('group_id', $message->group_id)->where("id", "!=", $message->id)->latest()->limit(1)->first();
-                if ($pre_message) {
-                    $group_for_last->last_message_id = $pre_message->id;
-                    $group_for_last->save();
-                }
-            }
 
             $group_users = $message->group_users;
 
@@ -284,14 +347,6 @@ class MessageController extends Controller
                 $this->delete_for_each_user($message, $user->user);
             }
         } else {
-            $conversation_for_last = Conversation::where("last_message_id", $message->id)->first();
-            if ($conversation_for_last) {
-                $pre_message = Message::where('conversation_id', $message->conversation_id)->where("id", "!=", $message->id)->latest()->limit(1)->first();
-                if ($pre_message) {
-                    $conversation_for_last->last_message_id = $pre_message->id;
-                    $conversation_for_last->save();
-                }
-            }
 
             $conversation = Conversation::where("id", $message->conversation_id)->first();
 
@@ -313,17 +368,70 @@ class MessageController extends Controller
         }
     }
 
-    public function deleted_for_user(Message $message, $user = null)
+    protected function update_the_pre_message(Message $message)
     {
-        $user ??= Auth::user();
-        $all_users_deleted = false;
+        if ($message->group_id) {
+            $pre_message = null;
+
+            $group_for_last = Group::where("last_message_id", $message->id)->first();
+
+            if ($group_for_last) {
+
+                $pre_message = Message::where('group_id', $message->group_id)
+                    ->where("id", "!=", $message->id)
+                    ->latest()
+                    ->first();
+
+                while ($pre_message && $this->is_deleted_for_all_users($pre_message)) {
+                    $pre_message = Message::where('group_id', $message->group_id)
+                        ->where('created_at', '<', $pre_message->created_at)
+                        ->latest('created_at')
+                        ->first();
+                }
+
+                if ($pre_message) {
+                    $group_for_last->last_message_id = $pre_message->id;
+                    $group_for_last->save();
+                }
+            }
+            return $pre_message;
+        } else {
+            $pre_message = null;
+
+            $conversation_for_last = Conversation::where("last_message_id", $message->id)->first();
+
+            if ($conversation_for_last) {
+                $pre_message = Message::where('conversation_id', $message->conversation_id)->where("id", "!=", $message->id)->latest()->limit(1)->first();
+
+                while ($pre_message && $this->is_deleted_for_all_users($pre_message)) {
+                    $pre_message = Message::where('conversation_id', $message->conversation_id)
+                        ->where('created_at', '<', $pre_message->created_at)
+                        ->latest('created_at')
+                        ->first();
+                }
+
+                if ($pre_message) {
+                    $conversation_for_last->last_message_id = $pre_message->id;
+                    $conversation_for_last->save();
+                }
+            }
+            return $pre_message;
+        }
+    }
+
+    protected function is_deleted_for_all_users(Message $message)
+    {
+        $is_deleted = false;
+
 
         if ($message->conversation_id) {
-            $other_user_id = $message->sender_id === $user->id ? $message->receiver_id : $message->sender_id;
-            $all_users_deleted = DeletedMessage::where("user_id", $other_user_id)->where('message_id', $message->id)->first() ? true : false;
-        } else {
+
+            $is_deleted = DeletedMessage::where('message_id', $message->id)
+                ->whereIn('user_id', [$message->sender_id, $message->receiver_id])
+                ->count() === 2;
+        } else if ($message->group_id) {
+
             $group_user_ids = GroupUsers::where("group_id", $message->group_id)
-                ->where("user_id", "!=", $user->id)
                 ->pluck("user_id")
                 ->toArray();
 
@@ -331,35 +439,13 @@ class MessageController extends Controller
                 ->whereIn("user_id", $group_user_ids)
                 ->count();
 
-            $all_users_deleted = count($group_user_ids) === $deleted_messages_count;
+            $is_deleted = count($group_user_ids) === $deleted_messages_count;
+        } else {
+            $is_deleted = true;
         }
 
-        if ($all_users_deleted) {
-            return $this->destroy($message);
-        }
 
-        DeletedMessage::create([
-            "message_id" => $message->id,
-            "user_id" => $user->id,
-        ]);
-
-
-        $deleted_message_ids = DeletedMessage::where("user_id", $user->id)->pluck("message_id")->toArray();
-
-        $pre_message = Message::where(function ($query) use ($message) {
-            if ($message->conversation_id) {
-                $query->where("conversation_id", $message->conversation_id);
-            } else {
-                $query->where("group_id", $message->group_id);
-            }
-        })
-            ->where("id", "!=", $message->id)
-            ->whereNotIn("id",  $deleted_message_ids)
-            ->latest()
-            ->limit(1)
-            ->first();
-
-        return response()->json(["deleted_message" => $message, "pre_message" => $pre_message]);
+        return $is_deleted;
     }
 
     public function save(Message $message)
@@ -373,7 +459,8 @@ class MessageController extends Controller
                 "saved_by" => $user->id,
             ]);
         }
-        $saved_message = SavedMessages::create([
+
+        SavedMessages::create([
             "message_id" => $message->id,
             "save_conversation_id" => $message_save_conversation->id,
         ]);
@@ -387,6 +474,7 @@ class MessageController extends Controller
     public function unsave(Message $message)
     {
         $user = Auth::user();
+        $unsave_mes = $message;
 
         $is_deleted_for_all = $this->is_deleted_for_all_users($message);
 
@@ -395,11 +483,11 @@ class MessageController extends Controller
         $unsaved_message = SavedMessages::where("save_conversation_id", $message_save_con->id)
             ->where("message_id", $message->id)->first();
 
-        $unsave_mes = $message;
-
         $unsaved_message->delete();
 
-        if ($is_deleted_for_all) {
+        $is_many_saved = $message->saved_message()->exists();
+
+        if (!$is_many_saved && $is_deleted_for_all) {
             $message->delete();
         }
 
@@ -407,32 +495,5 @@ class MessageController extends Controller
             "message" => new MessageResource($unsave_mes),
             "saved" => false
         ]);
-    }
-
-    protected function is_deleted_for_all_users(Message $message)
-    {
-        $user = Auth::user();
-        $is_deleted = false;
-
-        if ($message->conversation_id) {
-            $other_user_id = $message->sender_id === $user->id ? $message->receiver_id : $message->sender_id;
-
-            $is_deleted = DeletedMessage::where('message_id', $message->id)
-                ->whereIn('user_id', [$user->id, $other_user_id])
-                ->count() === 2;;
-        } else {
-
-            $group_user_ids = GroupUsers::where("group_id", $message->group_id)
-                ->pluck("user_id")
-                ->toArray();
-
-            $deleted_messages_count = DeletedMessage::where("message_id", $message->id)
-                ->whereIn("user_id", $group_user_ids)
-                ->count();
-
-            $is_deleted = count($group_user_ids) === $deleted_messages_count;
-        }
-
-        return $is_deleted;
     }
 }

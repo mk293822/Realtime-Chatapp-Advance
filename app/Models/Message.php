@@ -42,4 +42,12 @@ class Message extends Model
     {
         return $this->hasMany(SavedMessages::class, "message_id");
     }
+
+    // public function scopeForIs_Deleted(User $user)
+    // {
+    //     $deleted_message = DeletedMessage::where("user_id", $user->id)
+    //         ->where("message_id", $this->id)
+    //         ->first();
+    //     return $deleted_message;
+    // }
 }

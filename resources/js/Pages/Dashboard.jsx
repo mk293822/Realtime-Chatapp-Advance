@@ -21,6 +21,11 @@ function Dashboard({ selected_conversation = null, messages = null }) {
     const [scrollFromBottom, setScrollFromBottom] = useState();
     const [isSavedConversation, setIsSavedConversation] = useState(false);
 
+    useEffect(() => {
+        setLocalMessages(messages ? messages?.data.slice().reverse() : []);
+        if (messages?.data.length < 10) setNoMoreMessages(true);
+    }, [messages]);
+
     const loadMoreMessages = useCallback(
         debounce(() => {
             if (noMoreMessages) return;
@@ -120,10 +125,8 @@ function Dashboard({ selected_conversation = null, messages = null }) {
     };
 
     useEffect(() => {
-        selected_conversation &&
-            selected_conversation.is_save_conversation &&
-            setIsSavedConversation(true);
-    }, []);
+        setIsSavedConversation(!!selected_conversation?.is_save_conversation);
+    }, [selected_conversation]);
 
     useEffect(() => {
         toBottom();
@@ -146,10 +149,6 @@ function Dashboard({ selected_conversation = null, messages = null }) {
             offMessageSaveConversation();
         };
     }, [selected_conversation, on]);
-
-    useEffect(() => {
-        setLocalMessages(messages ? messages.data.reverse() : []);
-    }, [messages]);
 
     if (!selected_conversation) {
         return (
@@ -183,6 +182,11 @@ function Dashboard({ selected_conversation = null, messages = null }) {
                         {localMessages.length > 0 && (
                             <div className="flex-1 flex flex-col gap-2">
                                 <div ref={loadMoreIntersect}></div>
+                                {noMoreMessages && (
+                                    <div className="text-center mx-auto font-bold text-xl">
+                                        No More Messages
+                                    </div>
+                                )}
                                 {localMessages.map((message, index) => (
                                     <React.Fragment key={index}>
                                         {message.last_send_date && (

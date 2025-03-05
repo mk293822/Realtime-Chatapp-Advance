@@ -199,13 +199,11 @@ const ChatLayout = ({ children }) => {
             })
             .leaving((user) => {
                 lastActiveTime(user);
-                setTimeout(() => {
-                    setOnlineUsers((pre) => {
-                        const preOnlineUser = { ...pre };
-                        delete preOnlineUser[user.id];
-                        return preOnlineUser;
-                    });
-                }, [3000]);
+                setOnlineUsers((pre) => {
+                    const preOnlineUser = { ...pre };
+                    delete preOnlineUser[user.id];
+                    return preOnlineUser;
+                });
             })
             .error((err) => {
                 console.log(err);

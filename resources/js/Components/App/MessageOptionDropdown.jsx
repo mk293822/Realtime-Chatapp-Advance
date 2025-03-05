@@ -45,9 +45,17 @@ const MessageOptionDropdown = ({ message, close = () => {}, x, y, show }) => {
     };
 
     const onMessageDeleteForAll = () => {
-        axios.delete(route("message.destroy", message.id)).catch((error) => {
-            console.log(error);
-        });
+        axios
+            .delete(route("message.destroy", message.id))
+            .then((res) => {
+                emit("newMessage.delete", {
+                    message: res.data.deleted_message,
+                    preMessage: res.data.pre_message,
+                });
+            })
+            .catch((error) => {
+                console.log(error);
+            });
         close();
     };
 
@@ -56,7 +64,6 @@ const MessageOptionDropdown = ({ message, close = () => {}, x, y, show }) => {
             .post(route("message.save", message.id))
             .then((response) => {
                 setIsSave(response.data.saved);
-                emit("newMessage.send", response.data.message);
             })
             .catch((error) => {
                 console.log(error);
