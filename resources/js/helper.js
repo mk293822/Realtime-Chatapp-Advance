@@ -23,13 +23,30 @@ export function formatActiveDate(date) {
 export function formatMessageDate(date) {
     const input_date = new Date(date);
     const now = new Date();
-    const diffDays = Math.floor((now - input_date) / (1000 * 86400));
 
-    if (diffDays === 1) return `Yesterday : ${input_date.toLocaleTimeString([], { hour: "numeric", minute: "numeric" })}`;
-    if (diffDays > 1) return input_date.toLocaleDateString();
+    const diffTime = now - input_date;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    const diffYear = now.getFullYear() - input_date.getFullYear();
+
+    if (diffDays === 1) {
+        return `Yesterday : ${input_date.toLocaleTimeString([], { hour: "numeric", minute: "numeric" })}`;
+    }
+
+    if (diffDays > 1) {
+        return `${input_date.toLocaleDateString([], diffYear < 1 ? { day: "2-digit", month: "2-digit" } : {})} : ${diffYear < 1 ? input_date.toLocaleTimeString([], { hour: "numeric", minute: "numeric" }) : ''}`;
+    }
 
     return input_date.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric' });
 }
+
+export const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600).toString().padStart(2, "0");
+    const mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, "0");
+    const secs = (seconds % 60).toString().padStart(2, "0");
+    return `${hrs !== '00' ? `${hrs}:` : ""}${mins}:${secs}`;
+};
+
 
 export function debounce(func, delay) {
     let timer;
@@ -92,8 +109,27 @@ export const isPreviewAble = (attachment) => {
 export const formatBytes = (size) => {
     if (size === 0) return "0 B"; // Handle zero bytes case
 
-    const sizeUnits = ["B", "KB", "MB", "GB", "TB", "PB"];
+    const sizeUnits = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(size) / Math.log(1024));
 
     return `${(size / Math.pow(1024, i)).toFixed(2)} ${sizeUnits[i]}`;
+};
+
+
+export const checkPermissions = async (permissions) => {
+    const results = await Promise.all(
+        permissions.map((name) => navigator.permissions.query({ name }))
+    );
+    return results.every((result) => result.state === "granted");
+};
+
+
+export const requestMediaAccess = async (constraints) => {
+    try {
+        await navigator.mediaDevices.getUserMedia(constraints);
+        return true;
+    } catch (err) {
+        console.error("Media access denied:", err);
+        return false;
+    }
 };

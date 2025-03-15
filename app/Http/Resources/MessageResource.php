@@ -27,6 +27,7 @@ class MessageResource extends JsonResource
             'created_at' => $this->created_at . " UTC",
             "last_send_date" => $this->last_send_date,
             'is_saved' => $this->saved_message()->exists(),
+            'call_message' =>  new CallMessageResource($this->call_message),
         ];
     }
 }

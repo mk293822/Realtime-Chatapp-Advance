@@ -40,7 +40,12 @@ class Message extends Model
 
     public function saved_message()
     {
-        return $this->hasMany(SavedMessages::class, "message_id");
+        return $this->hasOne(SavedMessages::class, "message_id");
+    }
+
+    public function call_message()
+    {
+        return $this->hasOne(CallMessage::class, "message_id");
     }
 
     // public function scopeForIs_Deleted(User $user)

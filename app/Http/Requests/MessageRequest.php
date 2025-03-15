@@ -28,7 +28,10 @@ class MessageRequest extends FormRequest
             "conversation_id" => 'nullable|exists:conversations,id',
             "attachments" => "nullable|array|max:10",
             "attachments.*" => 'file|max:1024000',
-            'save_conversation_id' => 'nullable|exists:message_saved_conversations,id'
+            'save_conversation_id' => 'nullable|exists:message_saved_conversations,id',
+            "payload" => 'nullable|string',
+            "type" => 'nullable|string',
+            'timer' => 'nullable|string',
         ];
     }
 }

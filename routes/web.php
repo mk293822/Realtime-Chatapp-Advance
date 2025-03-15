@@ -25,6 +25,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/message/unsave/{message}', [MessageController::class, 'unsave'])->name('message.unsave');
     Route::get('/message/{message}', [MessageController::class, 'loadMoreMessage'])->name('message.loadMoreMessage');
 
+    Route::get('/private/room/{user}', [DashboardController::class, "call_room"])->name("private.callRoom");
+    Route::post('/call_request/{user}', [DashboardController::class, "call_request"])->name("call_request");
+
     Route::post('/conversation', [ConversationController::class, 'block'])->name('conversation.block');
 });
 

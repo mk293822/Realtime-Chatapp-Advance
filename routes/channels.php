@@ -20,3 +20,7 @@ Broadcast::channel("message.group.{group_id}", function (User $user, $group_id) 
 Broadcast::channel("conversation.{conversation_id}", function (User $user, $conversation_id) {
     return Conversation::forUsers($user->id)->get()->contains("id", $conversation_id) ? $user : null;
 });
+
+Broadcast::channel("private.call.{senderId}-{receiverId}", function (User $user, $receiverId, $senderId) {
+    return $user->id == $receiverId || $user->id == $senderId ? $user : null;
+});

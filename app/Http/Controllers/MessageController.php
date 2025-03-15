@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Events\MessageSend;
 use App\Http\Requests\MessageRequest;
+use App\Http\Resources\CallMessageResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\MessageSavedConversationResource;
+use App\Models\CallMessage;
 use App\Models\Conversation;
 use App\Models\DeletedMessage;
 use App\Models\Group;
@@ -45,6 +47,7 @@ class MessageController extends Controller
                 return !in_array($message->id, $deleted_messages);
             });
         }
+
 
         return inertia("Dashboard", [
             "messages" => MessageResource::collection($messages),
@@ -109,6 +112,12 @@ class MessageController extends Controller
         $group_id = $data['group_id'] ?? null;
         $conversation_id = $data['conversation_id'] ?? null;
         $save_conversation_id = $data['save_conversation_id'] ?? null;
+        $receiver_id = $data['receiver_id'] ?? null;
+
+        if ($receiver_id == null && $conversation_id) {
+            $conversation = Conversation::where("id", $conversation_id)->first();
+            $data['receiver_id'] = $conversation->user_id1 == $request->user()->id ? $conversation->user_id2 : $conversation->user_id1;
+        }
 
         $message = Message::create($data);
 
@@ -143,6 +152,27 @@ class MessageController extends Controller
             }
             $message->attachments()->saveMany($attachments);
         }
+
+        $type = $data["type"] ?? null;
+
+        if ($type) {
+            $video = $data["payload"];
+            $accept = match ($type) {
+                "call_end" => true,
+                "call_reject" => false,
+                default => false,
+            };
+
+            if ($accept !== null && $type !== "call_request") {
+                CallMessage::create([
+                    "message_id" => $message->id,
+                    "accept" => $accept,
+                    "is_video" => $video === "true" ? 1 : 0,
+                    "period" => $data['timer'] ?? null,
+                ]);
+            }
+        }
+
 
         if ($save_conversation_id) {
             SavedMessages::create([

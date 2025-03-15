@@ -38,6 +38,32 @@ const ChatLayout = ({ children }) => {
 
     const sidebar_button = document.getElementById("my-drawer");
 
+    // conversation block socket
+
+    useEffect(() => {
+        conversations.forEach((conversation) => {
+            if (conversation.is_conversation) {
+                let channel = `conversation.${conversation.conversation_id}`;
+
+                Echo.private(channel)
+                    .error((err) => console.log(err))
+                    .listen("ConversationStatusSockets", (e) => {
+                        if (e.status === "block")
+                            emit("conversation.block", e.conversation);
+                    });
+            }
+        });
+
+        return () => {
+            conversations.forEach((conversation) => {
+                if (conversation.is_conversation) {
+                    let channel = `conversation.${conversation.conversation_id}`;
+                    Echo.leave(channel);
+                }
+            });
+        };
+    }, [conversations]);
+
     const onSearch = (e) => {
         const search = e.target.value.toLowerCase();
         setLocalConversations(
@@ -59,6 +85,10 @@ const ChatLayout = ({ children }) => {
     };
 
     const isUserOnline = (user_id) => onlineUsers[user_id];
+
+    useEffect(() => {
+        emit("online_user", onlineUsers);
+    }, [isUserOnline, onlineUsers]);
 
     const newMessageSend = (message) => {
         setLocalConversations((oldUser) => {

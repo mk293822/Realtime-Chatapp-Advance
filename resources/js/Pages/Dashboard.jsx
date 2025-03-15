@@ -7,17 +7,19 @@ import { debounce, formatMessageDate } from "@/helper";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import ChatLayout from "@/Layouts/ChatLayout";
 import { ChatBubbleLeftEllipsisIcon } from "@heroicons/react/20/solid";
+import { usePage } from "@inertiajs/react";
 import axios from "axios";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 function Dashboard({ selected_conversation = null, messages = null }) {
-    const { on } = useEventBus();
+    const { on, emit } = useEventBus();
     const [localMessages, setLocalMessages] = useState([]);
     const loadMoreIntersect = useRef();
     const messageCtrRef = useRef();
     const [attachmentPreview, setAttachmentPreview] = useState({});
     const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
     const [noMoreMessages, setNoMoreMessages] = useState(false);
+    const [isLoadMessage, setIsLoadMessage] = useState(false);
     const [scrollFromBottom, setScrollFromBottom] = useState();
     const [isSavedConversation, setIsSavedConversation] = useState(false);
 
@@ -29,6 +31,7 @@ function Dashboard({ selected_conversation = null, messages = null }) {
     const loadMoreMessages = useCallback(
         debounce(() => {
             if (noMoreMessages) return;
+            setIsLoadMessage(true);
 
             const firstMessage = localMessages[0];
 
@@ -38,6 +41,7 @@ function Dashboard({ selected_conversation = null, messages = null }) {
                         params: { is_save_conversation: isSavedConversation },
                     })
                     .then(({ data }) => {
+                        setIsLoadMessage(false);
                         if (data.messages === "noMoreMessages") {
                             setNoMoreMessages(true);
                             return;
@@ -56,7 +60,7 @@ function Dashboard({ selected_conversation = null, messages = null }) {
                         ]);
                     });
             }
-        }, 300),
+        }, 1000),
         [localMessages, noMoreMessages]
     );
 
@@ -177,6 +181,11 @@ function Dashboard({ selected_conversation = null, messages = null }) {
                                 <div className="text-lg text-slate-200">
                                     No messages yet
                                 </div>
+                            </div>
+                        )}
+                        {isLoadMessage && (
+                            <div className="flex justify-center items-center my-4">
+                                <div className="loading loading-spinner text-primary"></div>
                             </div>
                         )}
                         {localMessages.length > 0 && (
