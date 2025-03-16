@@ -4,7 +4,11 @@ import UserAvatar from "./UserAvatar";
 import GroupAvatar from "./GroupAvatar";
 import { formatActiveDate } from "@/helper";
 import { useEventBus } from "@/EventBus";
-import { MapPinIcon } from "@heroicons/react/20/solid";
+import {
+    ArrowDownLeftIcon,
+    ArrowUpRightIcon,
+    MapPinIcon,
+} from "@heroicons/react/20/solid";
 
 const ConversationItem = ({
     conversation,
@@ -15,6 +19,8 @@ const ConversationItem = ({
 }) => {
     let classes = "border-transparent";
     const blocked = conversation.block;
+    const [callStatus, setCallStatus] = useState("");
+    const currentUser = usePage().props.auth.user;
 
     const { on } = useEventBus();
 
@@ -58,6 +64,28 @@ const ConversationItem = ({
         }
     }
 
+    useEffect(() => {
+        if (conversation.call_message) {
+            const call_message = conversation.call_message.data;
+
+            setCallStatus(() => {
+                if (call_message.accept) {
+                    return `${
+                        currentUser.id === conversation.sender_id
+                            ? "Outgoing"
+                            : "Incoming"
+                    } ${call_message.is_video ? "Video" : ""} Call`;
+                } else {
+                    return currentUser.id === conversation.sender_id
+                        ? `Cancelled ${
+                              call_message.is_video ? "Video" : ""
+                          } Call`
+                        : `Missed ${call_message.is_video ? "Video" : ""} Call`;
+                }
+            });
+        }
+    }, []);
+
     return (
         <Link
             href={
@@ -95,10 +123,36 @@ const ConversationItem = ({
                     )}
                 </div>
                 <div className="flex items-center justify-between">
-                    {!blocked && conversation.last_message && (
-                        <p className="text-xs text-gray-500 max-w-[95%] text-nowrap overflow-hidden text-ellipsis">
-                            {conversation.last_message}
-                        </p>
+                    {!blocked && (
+                        <div className="flex gap-2 items-center">
+                            {conversation.last_message_attachment && (
+                                <img
+                                    src={
+                                        conversation.last_message_attachment
+                                            .data.path
+                                    }
+                                    className="w-auto h-5"
+                                />
+                            )}
+                            {callStatus && (
+                                <div className="flex gap-1 items-center">
+                                    {conversation.sender_id ===
+                                    currentUser.id ? (
+                                        <ArrowUpRightIcon className="size-4" />
+                                    ) : (
+                                        <ArrowDownLeftIcon className="size-4" />
+                                    )}
+                                    <p className="text-xs text-gray-500 max-w-[100%] text-nowrap overflow-hidden text-ellipsis">
+                                        {callStatus}
+                                    </p>
+                                </div>
+                            )}
+                            {conversation.last_message && (
+                                <p className="text-xs text-gray-500 max-w-[95%] text-nowrap overflow-hidden text-ellipsis">
+                                    {conversation.last_message}
+                                </p>
+                            )}
+                        </div>
                     )}
                     {!blocked && conversation.pin && (
                         <MapPinIcon className="w-[13px] text-blue-600" />

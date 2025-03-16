@@ -82,12 +82,16 @@ const ConversationHeader = ({ conversation }) => {
                 <span>{conversation.name}</span>
             </div>
             <div className="flex gap-4 items-center justify-center">
-                <button onClick={handleAudioCall} className="">
-                    <PhoneIcon className="size-6" />
-                </button>
-                <button onClick={handleVideoCall}>
-                    <VideoCameraIcon className="size-6" />
-                </button>
+                {conversation.is_conversation && (
+                    <>
+                        <button onClick={handleAudioCall} className="">
+                            <PhoneIcon className="size-6" />
+                        </button>
+                        <button onClick={handleVideoCall}>
+                            <VideoCameraIcon className="size-6" />
+                        </button>
+                    </>
+                )}
                 <Link className="">
                     <InformationCircleIcon className="size-6" />
                 </Link>

@@ -112,7 +112,7 @@ const MessageInputsBar = ({ conversation }) => {
         const updatedFiles = [...files].map((file) => {
             return {
                 file: file,
-                path: path.createObjectpath(file),
+                path: URL.createObjectURL(file),
             };
         });
 
@@ -120,8 +120,6 @@ const MessageInputsBar = ({ conversation }) => {
     };
 
     const recordAudioReady = (file, path) => {
-        console.log("fileReady", file);
-
         setChosenFiles((pre) => [...pre, { file, path }]);
     };
 

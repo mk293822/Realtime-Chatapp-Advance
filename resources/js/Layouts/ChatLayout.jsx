@@ -1,3 +1,4 @@
+import ChatHeader from "@/Components/App/ChatHeader";
 import ConversationContextMenu from "@/Components/App/ConversationContextMenu";
 import ConversationItem from "@/Components/App/ConversationItem";
 import TextInput from "@/Components/TextInput";
@@ -318,43 +319,13 @@ const ChatLayout = ({ children }) => {
                 }`}
             >
                 {!showArchived && (
-                    <div className="flex gap-0 p-2  shadow-black/60 z-10 shadow-md h-[64px] justify-center items-center">
-                        <div className="drawer max-w-12">
-                            <input
-                                id="my-drawer"
-                                type="checkbox"
-                                className="drawer-toggle"
-                            />
-                            <div className="drawer-content w-20">
-                                {/* Page content here */}
-                                <label
-                                    htmlFor="my-drawer"
-                                    className="bg-transparent border-none outline-none cursor-pointer drawer-button"
-                                >
-                                    <Bars3Icon className="size-8" />
-                                </label>
-                            </div>
-                            <div className="drawer-side ">
-                                <label
-                                    htmlFor="my-drawer"
-                                    aria-label="close sidebar"
-                                    className="drawer-overlay"
-                                ></label>
-                                {/* Sidebar content here */}
-                                <SideBar
-                                    sidebar_button={sidebar_button}
-                                    status={edit_status}
-                                    mustVerifyEmail={mustVerifyEmail}
-                                    conversations={localConversations}
-                                />
-                            </div>
-                        </div>
-                        <TextInput
-                            onKeyUp={onSearch}
-                            placeholder="Search"
-                            className="w-full px-4 rounded-[10rem] h-10"
-                        />
-                    </div>
+                    <ChatHeader
+                        sidebar_button={sidebar_button}
+                        edit_status={edit_status}
+                        mustVerifyEmail={mustVerifyEmail}
+                        localConversations={localConversations}
+                        onSearch={onSearch}
+                    />
                 )}
                 {showArchived && (
                     <div className="p-2 flex gap-4 items-center justify-start shadow-black/60 z-10 shadow-md h-[64px]">

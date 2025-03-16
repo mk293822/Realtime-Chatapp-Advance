@@ -5,11 +5,14 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Enums\FriendStatusEnum;
+use App\Http\Resources\AttachmentResource;
+use App\Http\Resources\CallMessageResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -67,8 +70,6 @@ class User extends Authenticatable
 
         $query = User::select([
             "users.*",
-            "messages.message as last_message",
-            "messages.created_at as last_message_date",
             "conversations.last_message_id as last_message_id",
             "conversations.id as conversation_id",
             "conversations.accept as accept",
@@ -76,7 +77,7 @@ class User extends Authenticatable
             "conversations.pending as pending",
             "conversations.block as block",
             "conversations.blocked_by as blocked_by",
-            'conversations.status_at as status_at',
+            "conversations.status_at as status_at",
             "conversations.request_by as request_by",
             "conversations.status_by as status_by",
             "user_conversations_statuses.pin as pin",
@@ -100,7 +101,6 @@ class User extends Authenticatable
             ->orderBy('users.name')
             ->orderBy("users.created_at")
             ->orderBy("user_conversations_statuses.pin", "desc");
-
 
         return $query->get();
     }
@@ -166,7 +166,10 @@ class User extends Authenticatable
 
         $deleted_message = DeletedMessage::where("user_id", Auth::id())->where("message_id", $this->last_message_id)->first();
 
-        $last_message = null;
+        $last_message = Message::where("conversation_id", $this->conversation_id)
+            ->where("id", "=", $this->last_message_id)
+            ->latest()
+            ->first();
 
         if ($deleted_message) {
             $deleted_message_ids = DeletedMessage::where("user_id", Auth::id())->pluck("message_id")->toArray();
@@ -175,9 +178,11 @@ class User extends Authenticatable
                 ->where("id", "!=", $this->last_message_id)
                 ->whereNotIn("id", $deleted_message_ids)
                 ->latest()
-                ->limit(1)
                 ->first();
         }
+
+        $attachment = $last_message->attachments->first();
+        $call_message = $last_message->call_message;
 
         return [
             'id'                => $this->id,
@@ -188,9 +193,10 @@ class User extends Authenticatable
             'gender'            => $this->gender,
             'avatar'            => $this->avatar,
             'active'            => $this->active . " UTC",
-            'last_message'      => $deleted_message ? $last_message->message : $this->last_message,
-            'last_message_date' => $deleted_message ? $last_message->created_at : $this->last_message_date . " UTC",
-            'last_message_id'   => $deleted_message ? $last_message->id : $this->last_message_id,
+            'last_message'      => $last_message->message,
+            'last_message_date' => $last_message->created_at . " UTC",
+            'sender_id'         => $last_message->sender_id,
+            'last_message_id'   => $last_message->id,
             'conversation_id'   => $this->conversation_id,
             'request_by'        => $this->request_by,
             'status_by'         => $this->status_by,
@@ -208,6 +214,8 @@ class User extends Authenticatable
             'is_conversation'   => true,
             "is_save_conversation" => false,
             'is_group'          => false,
+            'last_message_attachment' => $attachment ? new AttachmentResource($attachment) : null,
+            'call_message' => $call_message ? new CallMessageResource($call_message) : null,
         ];
     }
 }

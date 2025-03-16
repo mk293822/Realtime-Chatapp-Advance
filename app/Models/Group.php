@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Http\Resources\AttachmentResource;
 use App\Http\Resources\UserResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class Group extends Model
 {
@@ -100,7 +102,10 @@ class Group extends Model
     public function toConversationArray()
     {
         $deleted_message = DeletedMessage::where("user_id", Auth::id())->where("message_id", $this->last_message_id)->first();
-        $last_message = null;
+        $last_message = Message::where("group_id", $this->id)
+            ->where("id", "=", $this->last_message_id)
+            ->latest()
+            ->first();
         if ($deleted_message) {
             $deleted_message_ids = DeletedMessage::where("user_id", Auth::id())->pluck("message_id")->toArray();
 
@@ -109,6 +114,8 @@ class Group extends Model
                 ->whereNotIn("id", $deleted_message_ids)
                 ->latest()->limit(1)->first();
         }
+        $attachment = $last_message->attachments->first();
+
 
         return [
             'id' => $this->id,
@@ -116,9 +123,9 @@ class Group extends Model
             'avatar' => $this->avatar,
             "owner" => (new UserResource($this->owner))->toArray(request()),
             "group_users" => UserResource::collection(collect($this->group_users->pluck('user')))->toArray(request()),
-            'last_message'      => $deleted_message ? $last_message->message : $this->last_message,
-            'last_message_date' => $deleted_message ? $last_message->created_at : $this->last_message_date . " UTC",
-            'last_message_id'   => $deleted_message ? $last_message->id : $this->last_message_id,
+            'last_message'      => $last_message->message,
+            'last_message_date' => $last_message->created_at . " UTC",
+            'last_message_id'   => $last_message->id,
             'is_conversation' => false,
             "is_save_conversation" => false,
             "is_group" => true,
@@ -129,6 +136,7 @@ class Group extends Model
             'reject'   => $this->reject == 1 ?? false,
             'pending'  => $this->pending == 1 ?? false,
             'status_at' => $this->status_at . " UTC",
+            'last_message_attachment' => $attachment ? new AttachmentResource($attachment) : null,
         ];
     }
 }

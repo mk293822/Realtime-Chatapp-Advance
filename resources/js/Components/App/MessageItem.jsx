@@ -106,9 +106,9 @@ const MessageItem = ({ message, attachmentClick }) => {
                                 </div>
                             </div>
                             {message.call_message.is_video ? (
-                                <VideoCameraIcon className="size-7" />
+                                <VideoCameraIcon className="size-6" />
                             ) : (
-                                <PhoneIcon className="size-7" />
+                                <PhoneIcon className="size-6" />
                             )}
                         </div>
                     </div>
