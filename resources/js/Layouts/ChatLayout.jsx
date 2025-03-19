@@ -1,9 +1,7 @@
 import ChatHeader from "@/Components/App/ChatHeader";
 import ConversationContextMenu from "@/Components/App/ConversationContextMenu";
 import ConversationItem from "@/Components/App/ConversationItem";
-import TextInput from "@/Components/TextInput";
 import { useEventBus } from "@/EventBus";
-import SideBar from "@/Pages/Profile/SideBar";
 import { ArrowLeftIcon, Bars3Icon } from "@heroicons/react/20/solid";
 import { usePage } from "@inertiajs/react";
 import axios from "axios";
@@ -19,14 +17,11 @@ const initialContextMenu = {
 const ChatLayout = ({ children }) => {
     const page = usePage();
     const conversations = page.props.conversations;
+    const all_conversations = page.props.all_conversations;
     const selectedConversation = page.props.selected_conversation;
-
     const edit_status = page.props.status;
-
     const mustVerifyEmail = page.props.mustVerifyEmail;
-
     const { on, emit } = useEventBus();
-
     const user = usePage().props.auth.user;
 
     const [sortedConversations, setSortedConversations] = useState([]);
@@ -36,6 +31,7 @@ const ChatLayout = ({ children }) => {
         useState(initialContextMenu);
     const [showArchived, setShowArchived] = useState(false);
     const [statusUpdated, setStatusUpdated] = useState(false);
+    const [showAllUsers, setShowAllUsers] = useState(false);
 
     const sidebar_button = document.getElementById("my-drawer");
 
@@ -68,9 +64,9 @@ const ChatLayout = ({ children }) => {
     const onSearch = (e) => {
         const search = e.target.value.toLowerCase();
         setLocalConversations(
-            conversations.filter((conversation) => {
-                return conversation.name.toLowerCase().includes(search);
-            })
+            (showAllUsers ? all_conversations : conversations).filter(
+                ({ name }) => name.toLowerCase().includes(search)
+            )
         );
     };
 
@@ -124,6 +120,8 @@ const ChatLayout = ({ children }) => {
     };
 
     const handle_archived_show = () => {
+        setLocalConversations(conversations.filter((con) => !con.reject));
+        setShowAllUsers(false);
         setShowArchived(true);
         if (sidebar_button) sidebar_button.checked = !sidebar_button.checked;
     };
@@ -146,6 +144,9 @@ const ChatLayout = ({ children }) => {
         );
     };
 
+    const handleConversationRequest = () => {};
+    const handleConversationRequestSent = () => {};
+
     useEffect(() => {
         const offMessageSend = on("newMessage.send", newMessageSend);
         const offMessageDelete = on("newMessage.delete", messageDeleted);
@@ -155,57 +156,80 @@ const ChatLayout = ({ children }) => {
             handleBlockConversation
         );
 
+        const offConversationRequest = on(
+            "conversation.request",
+            handleConversationRequest
+        );
+        const offConversationRequestSent = on(
+            "conversation.requestSent",
+            handleConversationRequestSent
+        );
+
         return () => {
             offMessageSend();
             offMessageDelete();
             offArchivedShow();
             offConversationBlock();
+            offConversationRequest();
+            offConversationRequestSent();
         };
     }, [on]);
 
+    const toggleShowAllUsers = () => {
+        setShowAllUsers(!showAllUsers);
+    };
+
     useEffect(() => {
-        setLocalConversations(conversations.filter((con) => !con.reject));
-    }, [conversations]);
+        if (showAllUsers) {
+            setLocalConversations(all_conversations);
+        } else {
+            setLocalConversations(conversations.filter((con) => con.accept));
+        }
+    }, [conversations, all_conversations, showAllUsers]);
 
     useEffect(() => {
         setSortedConversations(
-            localConversations
-                .sort((a, b) => {
-                    if (a.last_message_date && b.last_message_date) {
-                        return b.last_message_date.localeCompare(
-                            a.last_message_date
-                        );
-                    } else if (a.last_message_date) {
-                        return -1;
-                    } else if (b.last_message_date) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                })
-                .sort((a, b) => {
-                    if (a.pin && b.pin) {
-                        return b.status_at.localeCompare(a.status_at);
-                    } else if (a.pin) {
-                        return -1;
-                    } else if (b.pin) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                })
-                .sort((a, b) => {
-                    if (a.block && b.block) {
-                        return b.status_at.localeCompare(a.status_at);
-                    } else if (a.block) {
-                        return 1;
-                    } else if (b.block) {
-                        return -1;
-                    } else {
-                        return 0;
-                    }
-                })
-                .filter((con) => (showArchived ? con.archived : !con.archived))
+            !showAllUsers
+                ? localConversations
+                      .sort((a, b) => {
+                          if (a.last_message_date && b.last_message_date) {
+                              return b.last_message_date.localeCompare(
+                                  a.last_message_date
+                              );
+                          } else if (a.last_message_date) {
+                              return -1;
+                          } else if (b.last_message_date) {
+                              return 1;
+                          } else {
+                              return 0;
+                          }
+                      })
+                      .sort((a, b) => {
+                          if (a.pin && b.pin) {
+                              return b.status_at.localeCompare(a.status_at);
+                          } else if (a.pin) {
+                              return -1;
+                          } else if (b.pin) {
+                              return 1;
+                          } else {
+                              return 0;
+                          }
+                      })
+                      .sort((a, b) => {
+                          if (a.block && b.block) {
+                              return b.status_at.localeCompare(a.status_at);
+                          } else if (a.block) {
+                              return 1;
+                          } else if (b.block) {
+                              return -1;
+                          } else {
+                              return 0;
+                          }
+                      })
+                      .filter((con) =>
+                          showArchived ? con.archived : !con.archived
+                      )
+                : localConversations
         );
         if (showArchived) setStatusUpdated(true);
     }, [localConversations, showArchived]);
@@ -323,8 +347,9 @@ const ChatLayout = ({ children }) => {
                         sidebar_button={sidebar_button}
                         edit_status={edit_status}
                         mustVerifyEmail={mustVerifyEmail}
-                        localConversations={localConversations}
                         onSearch={onSearch}
+                        toggleShowAllUsers={toggleShowAllUsers}
+                        conversations={conversations}
                     />
                 )}
                 {showArchived && (
@@ -356,6 +381,7 @@ const ChatLayout = ({ children }) => {
                                 conversation={conversation}
                                 online={!!isUserOnline(conversation.id)}
                                 selectedConversation={selectedConversation}
+                                showAllUsers={showAllUsers}
                             />
                         ))}
                 </div>

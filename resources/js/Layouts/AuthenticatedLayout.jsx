@@ -13,8 +13,9 @@ const initialContextMenu = {
 };
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const self = usePage().props.auth.user;
     const conversations = usePage().props.conversations;
+    const all_users = usePage().props.allUsers;
 
     const { on, emit } = useEventBus();
     const [contextMenu, setContextMenu] = useState(initialContextMenu);
@@ -29,7 +30,7 @@ export default function AuthenticatedLayout({ header, children }) {
         conversations.forEach((conversation) => {
             let channel = `message.group.${conversation.id}`;
             if (conversation.is_conversation) {
-                channel = `message.conversation.${[user.id, conversation.id]
+                channel = `message.conversation.${[self.id, conversation.id]
                     .sort((a, b) => a - b)
                     .join("-")}`;
             }
@@ -50,7 +51,7 @@ export default function AuthenticatedLayout({ header, children }) {
             conversations.forEach((conversation) => {
                 let channel = `message.group.${conversation.id}`;
                 if (conversation.is_conversation) {
-                    channel = `message.conversation.${[user.id, conversation.id]
+                    channel = `message.conversation.${[self.id, conversation.id]
                         .sort((a, b) => a - b)
                         .join("-")}`;
                 }
@@ -85,7 +86,7 @@ export default function AuthenticatedLayout({ header, children }) {
     useEffect(() => {
         conversations.forEach((conversation) => {
             if (conversation.is_conversation) {
-                const channel = `private.call.${[conversation.id, user.id]
+                const channel = `private.call.${[conversation.id, self.id]
                     .sort((a, b) => a - b)
                     .join("-")}`;
 
@@ -95,18 +96,18 @@ export default function AuthenticatedLayout({ header, children }) {
                             setIsCallLoading(false);
                             setIsVideoCall(e.payload == "video");
                             setCaller(conversation);
-                            if (e.senderId == user.id) {
+                            if (e.senderId == self.id) {
                                 router.visit(
                                     `${route(
                                         "private.callRoom",
                                         conversation
                                     )}?video=${e.payload == "video"}`
                                 );
-                            } else if (e.receiverId == user.id) {
+                            } else if (e.receiverId == self.id) {
                                 setIsIncoming(true);
                                 audioRef.current.pause(); // Pause audio initially
                                 audioRef.current.currentTime = 0; // Reset audio to start
-                                audioRef.current.play().catch((err) => {}); // Play audio on user interaction
+                                audioRef.current.play().catch((err) => {}); // Play audio on self interaction
                             }
                             break;
 
@@ -122,7 +123,7 @@ export default function AuthenticatedLayout({ header, children }) {
         return () => {
             conversations.forEach((conversation) => {
                 if (conversation.is_conversation) {
-                    const channel = `private.call.${[conversation.id, user.id]
+                    const channel = `private.call.${[conversation.id, self.id]
                         .sort((a, b) => a - b)
                         .join("-")}`;
                     Echo.leave(channel);
@@ -188,6 +189,39 @@ export default function AuthenticatedLayout({ header, children }) {
     };
 
     // end video call section
+
+    useEffect(() => {
+        all_users.data.forEach((user) => {
+            let channel = `conversation.${[self.id, user.id]
+                .sort((a, b) => a - b)
+                .join("-")}`;
+
+            Echo.private(channel)
+                .error((err) => console.log(err))
+                .listen("ConversationStatusSockets", (e) => {
+                    if (e.status === "create" && e.receiver.id === self.id) {
+                        emit("conversation.request", {
+                            conversation: e.conversation,
+                            sender: e.sender,
+                        });
+                    } else if (
+                        e.status === "create" &&
+                        e.sender.id === self.id
+                    ) {
+                        emit("conversation.requestSent", e.conversation);
+                    }
+                });
+        });
+
+        return () => {
+            let channel = `conversation.${self.id}`;
+            Echo.leave(channel);
+        };
+    }, [self]);
+
+    // friend request
+
+    // end friend request
 
     return (
         <>

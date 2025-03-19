@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             "email" => "admin@gmail.com",
             "password" => Hash::make("password"),
         ]);
+        User::factory(20)->create();
     }
 
     private function seedConversationsAndMessages(): void
@@ -53,7 +54,6 @@ class DatabaseSeeder extends Seeder
                     'accept' => true,
                     'status_at' => now(),
                     'request_by' => $i,
-                    'status_by' => $j,
                 ]);
 
 
@@ -87,21 +87,24 @@ class DatabaseSeeder extends Seeder
     {
         $gro = 1;
 
-        for ($i = 1; $i < 13; $i++) {
+        for ($i = 1; $i < 10; $i++) {
             // Create Group
             $group = Group::factory()->create([
                 'id' => $gro,
                 'owner_id' => $i,
             ]);
 
-            for ($j = 1; $j < 13; $j++) {
+            $userIds = collect(range(1, 30))->shuffle();
+
+            for ($j = 1; $j < 10; $j++) {
                 $accept = fake()->boolean(70);
                 $pending = fake()->boolean(70);
+                $userId = $userIds->pop();
 
                 // Add User to Group
                 GroupUsers::factory()->create([
                     'group_id' => $gro,
-                    'user_id' => $j,
+                    'user_id' => $userId,
                     'accept' => $accept,
                     'pending' => !$accept && $pending,
                     'reject' => !$accept && !$pending,

@@ -79,7 +79,6 @@ class User extends Authenticatable
             "conversations.blocked_by as blocked_by",
             "conversations.status_at as status_at",
             "conversations.request_by as request_by",
-            "conversations.status_by as status_by",
             "user_conversations_statuses.pin as pin",
             "user_conversations_statuses.archived as archived",
             "user_conversations_statuses.mute as mute",
@@ -110,15 +109,15 @@ class User extends Authenticatable
         return $this->hasMany(DeletedMessage::class, "user_id");
     }
 
-    public function toSelectedConversation()
+    public static function toSelectedConversation(User $user)
     {
-        $user_id = $this->id;
+        $user_id = $user->id;
         $self_id = Auth::id();
 
-        $user = User::select([
-            'users.id',
-            'users.name',
-            'users.avatar',
+        $user_all = User::select([
+            'users.id as id',
+            'users.name as name',
+            'users.avatar as avatar',
             'conversations.id as conversation_id',
             "conversations.block as block",
             "user_conversations_statuses.pin as pin",
@@ -140,19 +139,37 @@ class User extends Authenticatable
             ->where('users.id', $user_id)
             ->first();
 
-
         return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'avatar' => $user->avatar,
-            "conversation_id" => $user->conversation_id,
+            'id' => $user_all->id,
+            'name' => $user_all->name,
+            'avatar' => $user_all->avatar,
+            "conversation_id" => $user_all->conversation_id,
             'is_conversation' => true,
             "is_group" => false,
             "is_save_conversation" => false,
-            'pin'      => $user->pin == 1 ?? false,
-            'archived' => $user->archived == 1 ?? false,
-            'mute'     => $user->mute == 1 ?? false,
-            "block" => $user->block == 1 ?? false,
+            'pin'      => $user_all->pin == 1 ?? false,
+            'archived' => $user_all->archived == 1 ?? false,
+            'mute'     => $user_all->mute == 1 ?? false,
+            "block" => $user_all->block == 1 ?? false,
+            "is_all" => true,
+        ];
+    }
+
+    public function toInertiaArray()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'avatar' => $this->avatar,
+            "conversation_id" => $this->conversation_id,
+            'is_conversation' => true,
+            "is_group" => false,
+            "is_save_conversation" => false,
+            'pin'      => $this->pin == 1 ?? false,
+            'archived' => $this->archived == 1 ?? false,
+            'mute'     => $this->mute == 1 ?? false,
+            "block" => $this->block == 1 ?? false,
+            "is_all" => true,
         ];
     }
 
@@ -181,8 +198,8 @@ class User extends Authenticatable
                 ->first();
         }
 
-        $attachment = $last_message->attachments->first();
-        $call_message = $last_message->call_message;
+        $attachment = $last_message?->attachments->first();
+        $call_message = $last_message?->call_message;
 
         return [
             'id'                => $this->id,
@@ -193,13 +210,12 @@ class User extends Authenticatable
             'gender'            => $this->gender,
             'avatar'            => $this->avatar,
             'active'            => $this->active . " UTC",
-            'last_message'      => $last_message->message,
-            'last_message_date' => $last_message->created_at . " UTC",
-            'sender_id'         => $last_message->sender_id,
-            'last_message_id'   => $last_message->id,
+            'last_message'      => $last_message?->message,
+            'last_message_date' => $last_message?->created_at . " UTC",
+            'sender_id'         => $last_message?->sender_id,
+            'last_message_id'   => $last_message?->id,
             'conversation_id'   => $this->conversation_id,
             'request_by'        => $this->request_by,
-            'status_by'         => $this->status_by,
             'accept'            => $this->accept == 1 ?? false,
             'reject'            => $this->reject == 1 ?? false,
             'pending'           => $this->pending == 1 ?? false,
@@ -216,6 +232,7 @@ class User extends Authenticatable
             'is_group'          => false,
             'last_message_attachment' => $attachment ? new AttachmentResource($attachment) : null,
             'call_message' => $call_message ? new CallMessageResource($call_message) : null,
+            'is_all' => false
         ];
     }
 }

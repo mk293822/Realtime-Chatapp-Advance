@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('user_id1')->constrained('users')->cascadeOnDelete();
             $table->foreignId('user_id2')->constrained('users')->cascadeOnDelete();
             $table->foreignId('request_by')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->foreignId('status_by')->nullable()->constrained('users')->cascadeOnDelete();
             $table->boolean('accept')->default(false);
             $table->boolean('reject')->default(false);
             $table->boolean('pending')->default(false);

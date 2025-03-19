@@ -21,6 +21,10 @@ Broadcast::channel("conversation.{conversation_id}", function (User $user, $conv
     return Conversation::forUsers($user->id)->get()->contains("id", $conversation_id) ? $user : null;
 });
 
+Broadcast::channel("conversation.{sender}-{receiver}", function (User $user, $sender, $receiver) {
+    return $user->id == $sender || $user->id == $receiver ? $user : null;
+});
+
 Broadcast::channel("private.call.{senderId}-{receiverId}", function (User $user, $receiverId, $senderId) {
     return $user->id == $receiverId || $user->id == $senderId ? $user : null;
 });

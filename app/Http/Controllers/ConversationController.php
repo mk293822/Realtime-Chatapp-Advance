@@ -5,28 +5,40 @@ namespace App\Http\Controllers;
 use App\Events\ConversationStatusSockets;
 use App\Models\Conversation;
 use App\Models\Group;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ConversationController extends Controller
 {
 
-
-
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(User $user)
     {
-        //
+        $self = Auth::user();
+
+        $conversation = Conversation::create([
+            'user_id1' => $self->id,
+            'user_id2' => $user->id,
+            'request_by' => $self->id,
+            'pending' => true,
+        ]);
+        $status = "create";
+
+        ConversationStatusSockets::dispatch($conversation, $status, $self,  $user);
+
+        return response()->json(['conversation', $conversation]);
     }
 
     /**
      * Display the specified resource.
      */
-    public function block(Request $request)
+    public function block(Conversation $conversation)
     {
-        $conversation_id = $request->input("conversation_id");
-        $user_id = $request->user()->id;
+        $conversation_id = $conversation->id;
+        $user_id = Auth::id();
         $status = "block";
 
         $update_conversation = Conversation::where("id", $conversation_id)->first();
@@ -36,7 +48,8 @@ class ConversationController extends Controller
                 $update_conversation->block = false;
                 $update_conversation->blocked_by = null;
                 $update_conversation->save();
-                ConversationStatusSockets::dispatch($update_conversation, $status);
+
+                ConversationStatusSockets::dispatch($update_conversation, $status, null, null);
 
                 return response()->json(["conversation" => $update_conversation]);
             } else {
@@ -48,7 +61,7 @@ class ConversationController extends Controller
         $update_conversation->block = !$update_conversation->block;
         $update_conversation->save();
 
-        ConversationStatusSockets::dispatch($update_conversation, $status);
+        ConversationStatusSockets::dispatch($update_conversation, $status, null, null);
 
         return response()->json(["conversation" => $update_conversation]);
     }

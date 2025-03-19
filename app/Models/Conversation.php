@@ -14,7 +14,14 @@ class Conversation extends Model
     protected $fillable = [
         'user_id1',
         'user_id2',
-        'last_message_id'
+        'last_message_id',
+        'pending',
+        'accept',
+        'reject',
+        'block',
+        'status_at',
+        'blocked_by',
+        'request_by'
     ];
 
     public static function boot()

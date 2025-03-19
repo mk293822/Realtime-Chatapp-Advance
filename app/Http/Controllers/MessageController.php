@@ -51,7 +51,7 @@ class MessageController extends Controller
 
         return inertia("Dashboard", [
             "messages" => MessageResource::collection($messages),
-            "selected_conversation" => $user->toSelectedConversation(),
+            "selected_conversation" => User::toSelectedConversation($user),
         ]);
     }
 
@@ -100,7 +100,7 @@ class MessageController extends Controller
 
         return inertia("Dashboard", [
             "messages" => MessageResource::collection($messages),
-            "selected_conversation" => $group->toSelectedConversationArray(),
+            "selected_conversation" => Group::toSelectedConversationArray($group),
         ]);
     }
 

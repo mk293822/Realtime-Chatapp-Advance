@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Conversation;
+use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -16,7 +17,7 @@ class ConversationStatusSockets implements ShouldBroadcastNow
     /**
      * Create a new event instance.
      */
-    public function __construct(public Conversation $conversation, public $status)
+    public function __construct(public Conversation $conversation, public $status, public $sender, public $receiver)
     {
         //
     }
@@ -25,12 +26,15 @@ class ConversationStatusSockets implements ShouldBroadcastNow
     {
         return [
             "conversation" => $this->conversation,
-            "status" => $this->status
+            "status" => $this->status,
+            "sender" => $this->sender,
+            "receiver" => $this->receiver,
         ];
     }
 
     /**
-     * Get the channels the event should broadcast on.
+     * Get the channels the event should broadcast on.```php
+
      *
      * @return array<int, \Illuminate\Broadcasting\Channel>
      */
@@ -38,8 +42,15 @@ class ConversationStatusSockets implements ShouldBroadcastNow
     {
         $channels = [];
         $conversation = $this->conversation;
+        $status = $this->status;
+        $sender = $this->sender;
+        $receiver = $this->receiver;
 
-        $channels[] = new PrivateChannel("conversation.{$conversation->id}");
+        if ($status === "create") {
+            $channels[] = new PrivateChannel("conversation." . collect([$sender->id, $receiver->id])->sort()->implode("-"));
+        } else {
+            $channels[] = new PrivateChannel("conversation.{$conversation->id}");
+        }
 
         return $channels;
     }

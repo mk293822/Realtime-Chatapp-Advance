@@ -28,7 +28,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/private/room/{user}', [DashboardController::class, "call_room"])->name("private.callRoom");
     Route::post('/call_request/{user}', [DashboardController::class, "call_request"])->name("call_request");
 
-    Route::post('/conversation', [ConversationController::class, 'block'])->name('conversation.block');
+    Route::post('/conversation/{conversation}', [ConversationController::class, 'block'])->name('conversation.block');
+    Route::post('/conversation/store/{user}', [ConversationController::class, 'store'])->name('conversation.store');
 });
 
 

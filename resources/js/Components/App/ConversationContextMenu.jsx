@@ -48,9 +48,7 @@ const ConversationContextMenu = ({
 
     const handleBlock = () => {
         axios
-            .post(route("conversation.block"), {
-                conversation_id: conversation.conversation_id,
-            })
+            .post(route("conversation.block", conversation.conversation_id))
             .then((res) => {
                 const block_conversation = res.data.conversation;
                 emit("conversation.block", block_conversation);

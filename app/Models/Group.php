@@ -47,6 +47,7 @@ class Group extends Model
             "user_conversations_statuses.mute as mute",
             "group_users.accept as accept",
             "group_users.reject as reject",
+            "group_users.block as block",
             "group_users.pending as pending",
             'group_users.status_at as status_at',
         ])
@@ -65,9 +66,9 @@ class Group extends Model
         return $query->get();
     }
 
-    public function toSelectedConversationArray()
+    public static function toSelectedConversationArray(Group $group)
     {
-        $group_id = $this->id;
+        $group_id = $group->id;
         $self_id = Auth::id();
 
         $query = Group::select([
@@ -96,6 +97,27 @@ class Group extends Model
             'pin'      => $query->pin == 1 ?? false,
             'archived' => $query->archived == 1 ?? false,
             'mute'     => $query->mute == 1 ?? false,
+            'is_all' => true
+
+        ];
+    }
+
+    public function toInertiaArray()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'avatar' => $this->avatar,
+            "owner" => (new UserResource($this->owner))->toArray(request()),
+            "group_users" => UserResource::collection(collect($this->group_users->pluck('user')))->toArray(request()),
+            "is_save_conversation" => false,
+            'is_conversation' => false,
+            "is_group" => true,
+            'pin'      => $this->pin == 1 ?? false,
+            'archived' => $this->archived == 1 ?? false,
+            'mute'     => $this->mute == 1 ?? false,
+            'is_all' => true
+
         ];
     }
 
@@ -135,8 +157,10 @@ class Group extends Model
             'accept'   => $this->accept == 1 ?? false,
             'reject'   => $this->reject == 1 ?? false,
             'pending'  => $this->pending == 1 ?? false,
+            'block'  => $this->block == 1 ?? false,
             'status_at' => $this->status_at . " UTC",
             'last_message_attachment' => $attachment ? new AttachmentResource($attachment) : null,
+            'is_all' => false
         ];
     }
 }

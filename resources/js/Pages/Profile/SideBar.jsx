@@ -17,15 +17,11 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useEventBus } from "@/EventBus";
 
-export default function SideBar({
-    mustVerifyEmail,
-    status,
-    conversations,
-    sidebar_button,
-}) {
+export default function SideBar({ mustVerifyEmail, status, sidebar_button }) {
     const page = usePage().props;
     const user = page.auth.user;
     const { emit } = useEventBus();
+    const conversations = page.conversations;
 
     const [enabled, setEnabled] = useState(page.auth.user.dark_mode);
     const [showArchived, setShowArchived] = useState(true);
